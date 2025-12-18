@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
+import Sidebar from "@/components/Sidebar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,8 +25,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${roboto.variable} antialiased`}>
-        {children}
+      <body className={`${inter.variable} ${roboto.variable} antialiased bg-black text-white`}>
+        <div className="flex h-screen w-full overflow-hidden font-sans">
+          <Sidebar />
+          <main className="flex-1 h-full relative ml-64 overflow-y-auto no-scrollbar">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );
