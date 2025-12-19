@@ -4,6 +4,7 @@ import { db } from "@/db/drizzle";
 import { bookmarks, appsAndTools, articles, categories } from "@/db/schema/content";
 import { auth } from "@/utils/auth";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import * as cheerio from "cheerio";
 import { v2 as cloudinary } from "cloudinary";
@@ -168,6 +169,7 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
           description: description,
           imageUrl: imageUrl,
         });
+        revalidatePath("/apps-and-tools");
         break;
       case "articles":
         await db.insert(articles).values({
@@ -178,6 +180,7 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
           description: description,
           imageUrl: imageUrl,
         });
+        revalidatePath("/articles");
         break;
       default:
         throw new Error(`No handler for category type: ${category.slug}`);
