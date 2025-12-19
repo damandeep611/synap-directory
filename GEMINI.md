@@ -2,6 +2,16 @@
 
 ## Core Architectural Principles
 
+
+some env variable names 
+DATABASE_URL =
+and use these for cloudinary 
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+
+
 ### Separation of Logic from Content
 - **Application Logic** (authentication states, user roles, core workflows) belongs in schema as enums and constraints
 - **Content** (user-generated or admin-managed data like categories, tags, bookmarks) belongs in relational tables that can be modified through UI
