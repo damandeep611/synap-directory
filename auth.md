@@ -2,6 +2,7 @@
 
 A guide to implementing single-admin authentication with better-auth, Drizzle ORM, and Next.js 16.
 
+guide
 ## Tech Stack
 
 | Component | Technology |
