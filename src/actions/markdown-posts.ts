@@ -9,6 +9,7 @@ export async function createMarkdownPost(formData: FormData) {
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const content = formData.get("content") as string;
+  const sidebarOption = formData.get("sidebarOption") as string;
 
   if (!title || !description || !content) {
     return { error: "All fields are required" };
@@ -29,6 +30,7 @@ export async function createMarkdownPost(formData: FormData) {
     await db.insert(bookmarks).values({
       id: bookmarkId,
       categoryId: category.id,
+      sidebarOption: sidebarOption || null,
     });
 
     // 3. Create Markdown Post
@@ -41,6 +43,10 @@ export async function createMarkdownPost(formData: FormData) {
     });
 
     revalidatePath("/md");
+    if (sidebarOption) {
+      revalidatePath(`/${sidebarOption}`);
+    }
+    
     return { success: true };
   } catch (error) {
     console.error("Failed to create markdown post:", error);

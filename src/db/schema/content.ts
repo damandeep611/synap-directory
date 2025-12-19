@@ -15,6 +15,7 @@ export const bookmarks = pgTable("bookmarks", {
   categoryId: text("category_id")
     .notNull()
     .references(() => categories.id),
+  sidebarOption: text("sidebar_option"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   deletedAt: timestamp("deleted_at"),
 });

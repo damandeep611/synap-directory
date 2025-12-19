@@ -4,65 +4,25 @@ import React from 'react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Wrench,
-  Youtube,
-  Sparkles,
-  GitBranch,
-  Cpu,
-  FileText,
-  BookOpen,
   Compass,
   ShieldAlert,
-  Briefcase,
-  Github,
-  Server,
-  Palette,
   Send,
-  BarChart3
+  BarChart3,
+  Youtube
 } from 'lucide-react';
-
-interface SidebarItem {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  href: string;
-}
+import { CATEGORY_SIDEBAR_ITEMS, SidebarItem } from '@/utils/sidebar-constants';
 
 const mainItems: SidebarItem[] = [
   { id: 'explore', label: 'Explore', icon: Compass, href: '/' },
-  { id: 'articles', label: 'Articles', icon: BookOpen, href: '/articles' },
+  { id: 'articles', label: 'Articles', icon: CATEGORY_SIDEBAR_ITEMS.find(i => i.id === 'articles')?.icon, href: '/articles' },
   { id: 'benchmarks', label: 'Benchmarks', icon: BarChart3, href: '/benchmarks' },
-];
-
-
-const toolItems: SidebarItem[] = [
-  { id: "gen-ai", label: "Gen AI Tools", icon: Sparkles, href: "/gen-ai" },
-  {
-    id: "apps-and-tools",
-    label: "Apps & Tools",
-    icon: Wrench,
-    href: "/apps-and-tools",
-  },
-  { id: "md", label: ".Md Files", icon: FileText, href: "/md" },
-  { id: "design", label: "Design", icon: Palette, href: "/design" },
-  {
-    id: "portfolios",
-    label: "Portfolios",
-    icon: Briefcase,
-    href: "/portfolios",
-  },
-  { id: "github", label: "Github Repos", icon: Github, href: "/github" },
-  { id: "backend", label: "Backend Tools", icon: Server, href: "/backend" },
-  { id: "youtube", label: "Youtube Channels", icon: Youtube, href: "/youtube" },
-  { id: "workflows", label: "Workflows", icon: GitBranch, href: "/workflows" },
-  { id: "mcp", label: "MCP", icon: Cpu, href: "/mcp" },
 ];
 
 const Sidebar: React.FC = () => {
   const pathname = usePathname();
 
   const renderItem = (item: SidebarItem) => {
-    const Icon = item.icon;
+    const Icon = item.icon || Compass; // Fallback
     const isActive = pathname === item.href;
 
     return (
@@ -92,6 +52,11 @@ const Sidebar: React.FC = () => {
     );
   };
 
+  // Filter out items that are already in main items or special/excluded
+  const directoryItems = CATEGORY_SIDEBAR_ITEMS.filter(item => 
+    item.id !== 'articles' // Articles is in main
+  ).concat({ id: 'youtube', label: 'Youtube Channels', icon: Youtube, href: '/youtube' }); // Youtube is separate as per request
+
   return (
     <aside className="w-64 h-full border-r border-white/5 bg-black/40 backdrop-blur-xl flex flex-col py-8 px-6 fixed left-0 top-0 z-50">
       <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -103,7 +68,7 @@ const Sidebar: React.FC = () => {
         <h2 className="text-[10px] tracking-[0.3em] uppercase text-white/40 font-semibold mb-6 pl-4">
           Directory
         </h2>
-        <nav className="space-y-2">{toolItems.map(renderItem)}</nav>
+        <nav className="space-y-2">{directoryItems.map(renderItem)}</nav>
       </div>
 
       <div className="mt-4 pt-4 border-t border-white/5 space-y-2">

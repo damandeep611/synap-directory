@@ -34,6 +34,7 @@ const fetchMetadataSchema = z.object({
 const saveBookmarkSchema = z.object({
   url: z.string().url(),
   categoryId: z.string().min(1),
+  sidebarOption: z.string().optional(),
   title: z.string(),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
@@ -145,7 +146,7 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
     const validated = saveBookmarkSchema.safeParse(input);
     if (!validated.success) return { success: false, error: validated.error.issues[0].message };
 
-    const { url, categoryId, title, description, imageUrl } = validated.data;
+    const { url, categoryId, sidebarOption, title, description, imageUrl } = validated.data;
 
     // 3. Get Category
     const [category] = await db.select().from(categories).where(eq(categories.id, categoryId));
@@ -157,6 +158,7 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
     await db.insert(bookmarks).values({
       id: bookmarkId,
       categoryId: categoryId,
+      sidebarOption: sidebarOption,
     });
 
     switch (category.slug) {
@@ -184,6 +186,10 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
         break;
       default:
         throw new Error(`No handler for category type: ${category.slug}`);
+    }
+
+    if (sidebarOption) {
+      revalidatePath(`/${sidebarOption}`);
     }
 
     return { success: true };
