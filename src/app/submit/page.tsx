@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Globe, TrendingUp, ShieldCheck, ArrowRight, Zap } from 'lucide-react';
+import MarkdownSubmissionForm from '@/components/MarkdownSubmissionForm';
 
 export default function SubmitPage() {
   return (
@@ -106,6 +107,9 @@ export default function SubmitPage() {
              </p>
            </div>
         </motion.div>
+
+        {/* Markdown Submission Section */}
+        <MarkdownSubmissionForm />
 
       </div>
     </div>

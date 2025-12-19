@@ -43,6 +43,17 @@ export const articles = pgTable("articles", {
   imageUrl: text("image_url"),
 });
 
+// Extension: Markdown Posts
+export const markdownPosts = pgTable("markdown_posts", {
+  id: text("id").primaryKey(),
+  bookmarkId: text("bookmark_id")
+    .notNull()
+    .references(() => bookmarks.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  content: text("content").notNull(), 
+});
+
 // Relations
 export const categoriesRelations = relations(categories, ({ many }) => ({
   bookmarks: many(bookmarks),
@@ -57,6 +68,7 @@ export const bookmarksRelations = relations(bookmarks, ({ one, many }) => ({
   // but we can define the inverse relations in the specific tables.
   appsAndTool: one(appsAndTools),
   article: one(articles),
+  markdownPost: one(markdownPosts),
 }));
 
 export const appsAndToolsRelations = relations(appsAndTools, ({ one }) => ({
@@ -69,6 +81,13 @@ export const appsAndToolsRelations = relations(appsAndTools, ({ one }) => ({
 export const articlesRelations = relations(articles, ({ one }) => ({
   bookmark: one(bookmarks, {
     fields: [articles.bookmarkId],
+    references: [bookmarks.id],
+  }),
+}));
+
+export const markdownPostsRelations = relations(markdownPosts, ({ one }) => ({
+  bookmark: one(bookmarks, {
+    fields: [markdownPosts.bookmarkId],
     references: [bookmarks.id],
   }),
 }));

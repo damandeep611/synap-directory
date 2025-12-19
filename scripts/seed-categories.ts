@@ -15,6 +15,11 @@ const main = async () => {
       name: "Articles",
       slug: "articles",
     },
+    {
+      id: crypto.randomUUID(),
+      name: "MD",
+      slug: "md",
+    },
   ];
 
   for (const seed of seeds) {
