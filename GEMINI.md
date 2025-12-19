@@ -9,7 +9,7 @@
 
 ### Single Source of Truth
 - Database is the single source of truth for all data
-- TypeScript types are generated from database schema, never manually defined separately
+- TypeScript types are generated/derived from database schema, never manually defined separately
 - UI components query data from database, never from hardcoded arrays or objects
 - Never duplicate the same data definition in multiple places (schema, types, form arrays)
 
@@ -39,10 +39,9 @@
 ### Soft Deletes
 - Use `deleted_at` timestamp field for soft deletes
 - Always filter `WHERE deleted_at IS NULL` in queries for active records
-- Store `deleted_by_user_id` for audit trail
 
 ## Authentication & Authorization
-
+-- the authentication is already done you can see the Schema files
 ### Two-Layer Security Model
 1. **Authentication** - "Who are you?" - Verify valid session exists
 2. **Authorization** - "What can you do?" - Verify user has required permissions
@@ -108,7 +107,6 @@ Every protected server action MUST follow this exact sequence:
 
 ### File Structure
 - Group by feature/domain, not by file type
-- Keep related code close (schema, actions, components for a feature in same directory)
 - Shared utilities in separate `/lib` or `/utils` directory
 
 ### Naming Conventions
@@ -161,8 +159,9 @@ Every protected server action MUST follow this exact sequence:
 ## Error Prevention
 
 ### Type Safety
-- Enable strict TypeScript mode
-- No `any` types - use `unknown` and type guards instead
+- No `any` types and never use @ts-ignore - use `unknown` and type guards instead
+- **NEVER use `any` or `@ts-ignore`** - Fix types, don't ignore them
+- **Explicit return types on all functions**
 - Exhaustive type checking with discriminated unions
 - Generate types from database schema automatically
 
@@ -207,24 +206,24 @@ Every protected server action MUST follow this exact sequence:
 ## Anti-Patterns to Avoid
 
 ### Never Do These
-- ❌ Store business logic in UI components
-- ❌ Skip validation because "UI prevents invalid input"
-- ❌ Use enums for content that changes
-- ❌ Duplicate data across multiple tables
-- ❌ Trust client-side authorization checks
-- ❌ Use switch statements for type-based rendering when data-driven approach works
-- ❌ Catch errors without logging or handling them
-- ❌ Return different response shapes from same endpoint
-- ❌ Mix authentication and business logic in same function
-- ❌ Store derived data that can be calculated
+- Never Store business logic in UI components
+- Never Skip validation because "UI prevents invalid input"
+- Never Use enums for content that changes
+- Never Duplicate data across multiple tables
+- Never Trust client-side authorization checks
+- Never Use switch statements for type-based rendering when data-driven approach works
+- Never Catch errors without logging or handling them
+- Never Return different response shapes from same endpoint
+- Never Mix authentication and business logic in same function
+- Never Store derived data that can be calculated
 
 ## When Unsure
 
 ### Decision Framework
-1. **Security**: When in doubt, be more restrictive
-2. **Data Structure**: When in doubt, normalize further
+1. **Security**: When in doubt, be more restrictive or ask
+2. **Data Structure**: When in doubt, normalize further and ask 
 3. **Validation**: When in doubt, validate more strictly
-4. **Types**: When in doubt, be more specific
+4. **Types**: When in doubt, be more specific 
 5. **Error Handling**: When in doubt, handle more cases
 
 ### Ask These Questions
