@@ -13,16 +13,29 @@ import {
   Link as LinkIcon,
   FileText,
   ChevronDown,
+  Trash2,
+  ExternalLink,
 } from "lucide-react";
 import { useSession, signOut } from "@/utils/auth-client";
 import {
   fetchUrlMetadata,
   saveBookmark,
   getCategories,
+  getAllBookmarks,
+  deleteBookmark,
 } from "@/actions/bookmarks";
 import { createMarkdownPost } from "@/actions/markdown-posts";
 import toast from "react-hot-toast";
 import { CATEGORY_SIDEBAR_ITEMS } from "@/utils/sidebar-constants";
+
+interface ResourceItem {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  createdAt: Date;
+  sidebarOption: string | null;
+}
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -54,11 +67,21 @@ export default function AdminDashboard() {
     sidebarOption: "",
   });
 
+  // Resources List State
+  const [resources, setResources] = useState<ResourceItem[]>([]);
+
   useEffect(() => {
     if (!isPending && !session) {
       router.push("/admin");
     }
   }, [session, isPending, router]);
+
+  const loadResources = async () => {
+    const res = await getAllBookmarks();
+    if (res.success && res.data) {
+      setResources(res.data);
+    }
+  };
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -71,6 +94,7 @@ export default function AdminDashboard() {
       }
     };
     loadCategories();
+    loadResources();
     // Set default sidebar option
     if (CATEGORY_SIDEBAR_ITEMS.length > 0) {
       setSelectedSidebarOption(CATEGORY_SIDEBAR_ITEMS[0].id);
@@ -92,6 +116,30 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     await signOut();
     router.push("/admin");
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this resource?"))
+      return;
+
+    // Optimistic update
+    setResources((prev) => prev.filter((r) => r.id !== id));
+    toast.loading("Deleting...", { id: "delete-toast" });
+
+    try {
+      const result = await deleteBookmark(id);
+      if (result.success) {
+        toast.success("Resource deleted", { id: "delete-toast" });
+        loadResources(); // Refresh to be sure
+      } else {
+        toast.error(`Error: ${result.error}`, { id: "delete-toast" });
+        loadResources(); // Revert on error
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete", { id: "delete-toast" });
+      loadResources();
+    }
   };
 
   // --- Link Workflow ---
@@ -145,6 +193,7 @@ export default function AdminDashboard() {
         setUrl("");
         setStep("input");
         setFormData({ title: "", description: "", imageUrl: "" });
+        loadResources();
       } else {
         toast.error(`Error: ${result.error}`);
       }
@@ -182,6 +231,7 @@ export default function AdminDashboard() {
           content: "",
           sidebarOption: mdFormData.sidebarOption,
         });
+        loadResources();
       } else {
         toast.error(
           typeof result.error === "string"
@@ -579,6 +629,72 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                     </form>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Manage Resources - Right Column */}
+          <div className="col-span-1 h-full">
+            <div className="p-1 rounded-3xl bg-linear-to-b from-white/10 to-transparent h-full">
+              <div className="bg-[#0A0A0A] rounded-[22px] p-8 border border-white/5 h-full relative overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-xl font-serif italic flex items-center gap-3">
+                    <Search className="w-5 h-5 text-yellow-200" />
+                    Library ({resources.length})
+                  </h2>
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                  {resources.length === 0 ? (
+                    <div className="text-white/30 text-center text-sm py-10">
+                      No resources found.
+                    </div>
+                  ) : (
+                    resources.map((item) => (
+                      <div
+                        key={item.id}
+                        className="group bg-white/5 border border-white/5 rounded-xl p-4 hover:bg-white/10 transition-all flex flex-col gap-2 relative"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-medium text-white truncate pr-6">
+                              {item.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] uppercase tracking-wider text-yellow-200/80 bg-yellow-900/20 px-2 py-0.5 rounded border border-yellow-200/10">
+                                {item.sidebarOption || "Uncategorized"}
+                              </span>
+                              <span className="text-[10px] text-white/30">
+                                {new Date(item.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="text-white/20 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-400/10 absolute top-3 right-3"
+                            title="Delete Resource"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {item.url && (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-white/30 hover:text-white/60 truncate flex items-center gap-1 mt-1 w-fit"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            <span className="truncate max-w-50">
+                              {item.url}
+                            </span>
+                          </a>
+                        )}
+                      </div>
+                    ))
                   )}
                 </div>
               </div>

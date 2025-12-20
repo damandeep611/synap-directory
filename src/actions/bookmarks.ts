@@ -199,3 +199,76 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
   }
 }
 
+export async function getAllBookmarks() {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session || session.user.role !== "admin") return { success: false, error: "Unauthorized" };
+
+    const result = await db.query.bookmarks.findMany({
+      with: {
+        appsAndTool: true,
+        article: true,
+        markdownPost: true,
+        category: true,
+      },
+      orderBy: (bookmarks, { desc }) => [desc(bookmarks.createdAt)],
+    });
+
+    const flattened = result.map((b) => {
+      let title = "Untitled";
+      let url = "";
+      
+      if (b.appsAndTool) {
+        title = b.appsAndTool.toolName;
+        url = b.appsAndTool.url;
+      } else if (b.article) {
+        title = b.article.title;
+        url = b.article.url;
+      } else if (b.markdownPost) {
+        title = b.markdownPost.title;
+        url = `/md/${b.id}`; // Construct internal URL for MD posts
+      }
+
+      return {
+        id: b.id,
+        title,
+        url,
+        type: b.category.name,
+        createdAt: b.createdAt,
+        sidebarOption: b.sidebarOption,
+      };
+    });
+
+    return { success: true, data: flattened };
+  } catch (error) {
+    console.error("Get all bookmarks error:", error);
+    return { success: false, error: "Failed to fetch bookmarks" };
+  }
+}
+
+export async function deleteBookmark(bookmarkId: string) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session || session.user.role !== "admin") return { success: false, error: "Unauthorized" };
+
+    // Fetch first to know what to revalidate
+    const bookmark = await db.query.bookmarks.findFirst({
+      where: eq(bookmarks.id, bookmarkId),
+    });
+
+    if (!bookmark) return { success: false, error: "Bookmark not found" };
+
+    await db.delete(bookmarks).where(eq(bookmarks.id, bookmarkId));
+
+    if (bookmark.sidebarOption) {
+      revalidatePath(`/${bookmark.sidebarOption}`);
+    }
+    revalidatePath("/admin/dashboard");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Delete bookmark error:", error);
+    return { success: false, error: "Failed to delete bookmark" };
+  }
+}
+
