@@ -285,9 +285,9 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Form - Left Column */}
-          <div className="lg:col-span-2">
+        <div className="flex flex-col gap-16">
+          {/* Main Form Section */}
+          <div className="w-full">
             <div className="p-1 rounded-3xl bg-linear-to-b from-white/10 to-transparent">
               <div className="bg-[#0A0A0A] rounded-[22px] p-8 border border-white/5 h-full relative overflow-hidden group">
                 {/* Ambient Glow */}
@@ -635,68 +635,119 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Manage Resources - Right Column */}
-          <div className="col-span-1 h-full">
-            <div className="p-1 rounded-3xl bg-linear-to-b from-white/10 to-transparent h-full">
-              <div className="bg-[#0A0A0A] rounded-[22px] p-8 border border-white/5 h-full relative overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-xl font-serif italic flex items-center gap-3">
-                    <Search className="w-5 h-5 text-yellow-200" />
-                    Library ({resources.length})
-                  </h2>
-                </div>
+          {/* Library Section - Modern Table View */}
+          <div className="w-full">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-serif italic flex items-center gap-3">
+                  <Search className="w-5 h-5 text-yellow-200" />
+                  Library Registry
+                </h2>
+                <p className="text-xs text-white/40 mt-1 uppercase tracking-widest">
+                  Managing {resources.length} active resources
+                </p>
+              </div>
+            </div>
 
-                <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                  {resources.length === 0 ? (
-                    <div className="text-white/30 text-center text-sm py-10">
-                      No resources found.
-                    </div>
-                  ) : (
-                    resources.map((item) => (
-                      <div
-                        key={item.id}
-                        className="group bg-white/5 border border-white/5 rounded-xl p-4 hover:bg-white/10 transition-all flex flex-col gap-2 relative"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-medium text-white truncate pr-6">
-                              {item.title}
-                            </h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[10px] uppercase tracking-wider text-yellow-200/80 bg-yellow-900/20 px-2 py-0.5 rounded border border-yellow-200/10">
-                                {item.sidebarOption || "Uncategorized"}
+            <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                        Resource Details
+                      </th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                        Section
+                      </th>
+                      <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                        Date Added
+                      </th>
+                      <th className="px-6 py-4 text-right text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {resources.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="px-6 py-16 text-center text-white/30 text-sm italic"
+                        >
+                          No resources found in the registry.
+                        </td>
+                      </tr>
+                    ) : (
+                      resources.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="group hover:bg-white/[0.03] transition-colors"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-white group-hover:text-yellow-100 transition-colors truncate max-w-md">
+                                {item.title}
                               </span>
-                              <span className="text-[10px] text-white/30">
-                                {new Date(item.createdAt).toLocaleDateString()}
-                              </span>
+                              {item.url && (
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-white/30 hover:text-white/60 flex items-center gap-1.5 mt-0.5 transition-colors"
+                                >
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                  <span className="truncate max-w-xs">
+                                    {item.url}
+                                  </span>
+                                </a>
+                              )}
                             </div>
-                          </div>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="text-white/20 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-400/10 absolute top-3 right-3"
-                            title="Delete Resource"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        {item.url && (
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-white/30 hover:text-white/60 truncate flex items-center gap-1 mt-1 w-fit"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            <span className="truncate max-w-50">
-                              {item.url}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-[10px] uppercase tracking-wider text-yellow-200/80 bg-yellow-900/20 px-2 py-1 rounded-md border border-yellow-200/10 whitespace-nowrap">
+                              {item.sidebarOption || "General"}
                             </span>
-                          </a>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-xs text-white/40 tabular-nums">
+                              {new Date(item.createdAt).toLocaleDateString(
+                                undefined,
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {item.url && (
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 text-white/20 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                                  title="Open Link"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                              )}
+                              <button
+                                onClick={() => handleDelete(item.id)}
+                                className="p-2 text-white/20 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                                title="Delete Resource"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
