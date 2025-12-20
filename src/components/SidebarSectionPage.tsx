@@ -5,19 +5,14 @@ import { eq, sql, desc } from "drizzle-orm";
 import MarkdownCard from "@/components/MarkdownCard";
 import ToolCard from "@/components/ToolCard";
 import ArticleCard from "@/components/ArticleCard";
+import GenAICard from "@/components/GenAICard";
+import GithubCard from "@/components/GithubCard";
 
 interface SidebarSectionPageProps {
   slug: string;
   title: string;
   subtitle: string;
 }
-
-// Resource Card Registry
-const RESOURCE_COMPONENTS: Record<string, React.ElementType> = {
-  'apps-and-tools': ToolCard,
-  'articles': ArticleCard,
-  'md': MarkdownCard,
-};
 
 export default async function SidebarSectionPage({ slug, title, subtitle }: SidebarSectionPageProps) {
   // We need to fetch all resources tagged with this sidebar option
@@ -67,14 +62,34 @@ export default async function SidebarSectionPage({ slug, title, subtitle }: Side
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8">
             {resources.map((res) => {
-              const CardComponent = RESOURCE_COMPONENTS[res.categorySlug];
-
-              if (!CardComponent) {
-                return null; // Or a fallback component
+              // --- SELECTION LOGIC ---
+              
+              // 1. Sidebar Specific Overrides
+              if (res.sidebarOption === 'gen-ai') {
+                return (
+                  <GenAICard 
+                    key={res.id}
+                    title={res.title}
+                    description={res.description}
+                    url={res.url}
+                    imageUrl={res.imageUrl}
+                  />
+                );
               }
 
-              // Normalize props for the components
-              // MarkdownCard expects 'post', others expect flat props
+              if (res.sidebarOption === 'github') {
+                return (
+                  <GithubCard
+                    key={res.id}
+                    title={res.title}
+                    description={res.description}
+                    url={res.url}
+                    imageUrl={res.imageUrl}
+                  />
+                );
+              }
+
+              // 2. Category Based Selection
               if (res.categorySlug === 'md' && res.content) {
                 return (
                   <MarkdownCard 
@@ -90,8 +105,22 @@ export default async function SidebarSectionPage({ slug, title, subtitle }: Side
                 );
               }
 
+              if (res.categorySlug === 'articles') {
+                return (
+                  <ArticleCard
+                    key={res.id}
+                    title={res.title}
+                    description={res.description}
+                    url={res.url}
+                    imageUrl={res.imageUrl}
+                    createdAt={res.createdAt}
+                  />
+                );
+              }
+
+              // 3. Default Fallback (Tools)
               return (
-                <CardComponent
+                <ToolCard
                   key={res.id}
                   title={res.title}
                   description={res.description}
