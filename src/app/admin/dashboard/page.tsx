@@ -4,11 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ShieldAlert,
-  RefreshCw,
-  Activity,
-  Database,
-  Lock,
   Plus,
   LogOut,
   Loader2,
@@ -16,10 +11,15 @@ import {
   Search,
   X,
   Link as LinkIcon,
-  FileText
+  FileText,
+  ChevronDown,
 } from "lucide-react";
 import { useSession, signOut } from "@/utils/auth-client";
-import { fetchUrlMetadata, saveBookmark, getCategories } from "@/actions/bookmarks";
+import {
+  fetchUrlMetadata,
+  saveBookmark,
+  getCategories,
+} from "@/actions/bookmarks";
 import { createMarkdownPost } from "@/actions/markdown-posts";
 import toast from "react-hot-toast";
 import { CATEGORY_SIDEBAR_ITEMS } from "@/utils/sidebar-constants";
@@ -27,7 +27,6 @@ import { CATEGORY_SIDEBAR_ITEMS } from "@/utils/sidebar-constants";
 export default function AdminDashboard() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
-  const [isSyncing, setIsSyncing] = useState(false);
   const [categories, setCategories] = useState<
     { id: string; name: string; slug: string }[]
   >([]);
@@ -82,10 +81,13 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  const handleSync = () => {
-    setIsSyncing(true);
-    setTimeout(() => setIsSyncing(false), 2000);
-  };
+  // Auto-select sidebar option based on resource type
+  useEffect(() => {
+    const category = categories.find((c) => c.id === selectedCategory);
+    if (category && category.slug === "articles") {
+      setSelectedSidebarOption("articles");
+    }
+  }, [selectedCategory, categories]);
 
   const handleLogout = async () => {
     await signOut();
@@ -218,29 +220,11 @@ export default function AdminDashboard() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-red-400">
-              <ShieldAlert className="w-4 h-4" />
-              <span className="text-xs font-bold tracking-[0.2em] uppercase">
-                Privileged Access
-              </span>
-            </div>
             <h1 className="text-5xl md:text-6xl font-serif italic mb-2 tracking-tight">
               System Administration
             </h1>
-            <p className="text-white/40 font-light text-lg">
-              High-level registry management and node monitoring interface.
-            </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleSync}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg border border-white/20 text-xs font-medium tracking-wider hover:bg-white/5 transition-colors uppercase"
-            >
-              <RefreshCw
-                className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`}
-              />
-              System Sync
-            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-6 py-3 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-all duration-300 text-xs font-medium tracking-wider uppercase"
@@ -379,22 +363,7 @@ export default function AdminDashboard() {
                                 )}
                               </select>
                               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <svg
-                                  width="10"
-                                  height="6"
-                                  viewBox="0 0 10 6"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M1 1L5 5L9 1"
-                                    stroke="white"
-                                    strokeOpacity="0.4"
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
+                                <ChevronDown size={16} />
                               </div>
                             </div>
                           </div>
@@ -423,22 +392,7 @@ export default function AdminDashboard() {
                                 ))}
                               </select>
                               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <svg
-                                  width="10"
-                                  height="6"
-                                  viewBox="0 0 10 6"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M1 1L5 5L9 1"
-                                    stroke="white"
-                                    strokeOpacity="0.4"
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
+                                <ChevronDown size={16} />
                               </div>
                             </div>
                           </div>
@@ -563,23 +517,8 @@ export default function AdminDashboard() {
                                 </option>
                               ))}
                             </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                              <svg
-                                width="10"
-                                height="6"
-                                viewBox="0 0 10 6"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M1 1L5 5L9 1"
-                                  stroke="white"
-                                  strokeOpacity="0.4"
-                                  strokeWidth="1.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ">
+                              <ChevronDown size={16} />
                             </div>
                           </div>
                         </div>
@@ -642,68 +581,6 @@ export default function AdminDashboard() {
                     </form>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Panel - Right Column */}
-          <div className="space-y-8">
-            {/* Node Performance */}
-            <div className="p-8 rounded-3xl bg-[#0A0A0A] border border-white/10 relative overflow-hidden">
-              <h3 className="text-xs font-bold text-white/40 tracking-widest uppercase mb-8">
-                Node Performance
-              </h3>
-
-              <div className="space-y-6 mb-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-yellow-200">
-                    <Activity className="w-4 h-4" />
-                    <span className="text-sm text-white/80">Compute Usage</span>
-                  </div>
-                  <span className="font-mono text-sm">82%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-blue-400">
-                    <Database className="w-4 h-4" />
-                    <span className="text-sm text-white/80">Database Sync</span>
-                  </div>
-                  <span className="font-mono text-sm">Active</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-green-400">
-                    <Lock className="w-4 h-4" />
-                    <span className="text-sm text-white/80">
-                      Security Status
-                    </span>
-                  </div>
-                  <span className="font-mono text-sm">Optimal</span>
-                </div>
-              </div>
-
-              {/* Bar Chart Visualization */}
-              <div className="flex items-end gap-2 h-24 pt-4 border-t border-white/5">
-                {[30, 45, 25, 60, 50, 80, 70, 40].map((height, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 bg-white/10 rounded-sm hover:bg-white/20 transition-colors cursor-crosshair"
-                    style={{ height: `${height}%` }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Maintenance Window */}
-            <div className="p-8 rounded-3xl bg-[#0A0A0A] border border-red-900/20 relative overflow-hidden">
-              <div className="absolute inset-0 bg-red-900/5" />
-              <div className="relative">
-                <h3 className="text-xs font-bold text-red-400 tracking-widest uppercase mb-2">
-                  Maintenance Window
-                </h3>
-                <p className="text-white/40 text-xs leading-relaxed">
-                  Scheduled system optimization cycles will initiate in{" "}
-                  <span className="text-white">04:22:18</span>. No downtime
-                  expected.
-                </p>
               </div>
             </div>
           </div>

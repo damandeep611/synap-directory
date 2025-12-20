@@ -9,6 +9,8 @@ import {
   Github,
   Server,
   Palette,
+  Library,
+  Hammer,
 } from 'lucide-react';
 
 export interface SidebarItem {
@@ -28,7 +30,8 @@ export const UI_ONLY_ITEMS = [
 // These are the categories that resources can be assigned to
 export const CATEGORY_SIDEBAR_ITEMS: SidebarItem[] = [
   { id: "gen-ai", label: "Gen AI Tools", icon: Sparkles, href: "/gen-ai" },
-  { id: "apps-and-tools", label: "Apps & Tools", icon: Wrench, href: "/apps-and-tools" },
+  { id: "tools", label: "Tools", icon: Hammer, href: "/tools" },
+  { id: "libraries", label: "Libraries", icon: Library, href: "/libraries" },
   { id: "md", label: ".Md Files", icon: FileText, href: "/md" },
   { id: "articles", label: "Articles", icon: BookOpen, href: "/articles" },
   { id: "design", label: "Design", icon: Palette, href: "/design" },

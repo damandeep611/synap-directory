@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic';
 export default function Page() {
   return (
     <SidebarSectionPage 
-      slug="mcp" 
-      title="MCP" 
-      subtitle="Resources for Model Context Protocol and related tools." 
+      slug="tools" 
+      title="TOOLS" 
+      subtitle="Useful software, utilities, and applications to boost productivity." 
     />
   );
 }

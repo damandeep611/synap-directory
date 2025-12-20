@@ -171,7 +171,6 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
           description: description,
           imageUrl: imageUrl,
         });
-        revalidatePath("/apps-and-tools");
         break;
       case "articles":
         await db.insert(articles).values({
