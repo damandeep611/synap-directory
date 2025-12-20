@@ -55,7 +55,7 @@ const Sidebar: React.FC = () => {
   // Filter out items that are already in main items or special/excluded
   const directoryItems = CATEGORY_SIDEBAR_ITEMS.filter(item => 
     item.id !== 'articles' // Articles is in main
-  ).concat({ id: 'youtube', label: 'Youtube Channels', icon: Youtube, href: '/youtube' }); // Youtube is separate as per request
+  );
 
   return (
     <aside className="w-64 h-full border-r border-white/5 bg-black/40 backdrop-blur-xl flex flex-col py-8 px-6 fixed left-0 top-0 z-50">

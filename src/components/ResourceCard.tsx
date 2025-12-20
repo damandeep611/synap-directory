@@ -1,19 +1,23 @@
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
-interface GenAICardProps {
+interface ResourceCardProps {
   title: string;
   description: string;
   url: string;
   imageUrl: string | null;
+  label?: string;
+  date?: Date;
 }
 
-export default function GenAICard({
+export default function ResourceCard({
   title,
   description,
   url,
   imageUrl,
-}: GenAICardProps) {
+  label = "Resource",
+  date,
+}: ResourceCardProps) {
   return (
     <a
       href={url}
@@ -51,9 +55,20 @@ export default function GenAICard({
         </div>
 
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/6">
-          <span className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase">
-            AI Tool
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase">
+              {label}
+            </span>
+            {date && (
+              <span className="text-[10px] text-zinc-600 font-mono">
+                {new Date(date).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2 text-white/40 group-hover:text-white transition-colors duration-300">
             <span className="text-xs font-medium">Visit</span>
             <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />

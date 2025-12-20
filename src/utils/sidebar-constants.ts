@@ -11,6 +11,7 @@ import {
   Palette,
   Library,
   Hammer,
+  Youtube,
 } from 'lucide-react';
 
 export interface SidebarItem {
@@ -24,7 +25,6 @@ export interface SidebarItem {
 export const UI_ONLY_ITEMS = [
   { id: 'explore', label: 'Explore', href: '/' },
   { id: 'benchmarks', label: 'Benchmarks', href: '/benchmarks' },
-  { id: 'youtube', label: 'Youtube Channels', href: '/youtube' },
 ];
 
 // These are the categories that resources can be assigned to
@@ -40,4 +40,5 @@ export const CATEGORY_SIDEBAR_ITEMS: SidebarItem[] = [
   { id: "backend", label: "Backend Tools", icon: Server, href: "/backend" },
   { id: "workflows", label: "Workflows", icon: GitBranch, href: "/workflows" },
   { id: "mcp", label: "MCP", icon: Cpu, href: "/mcp" },
+  { id: "youtube", label: "YouTube", icon: Youtube, href: "/youtube" },
 ];

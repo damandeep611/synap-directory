@@ -3,10 +3,11 @@ import { db } from "@/db/drizzle";
 import { bookmarks, appsAndTools, articles, markdownPosts, categories } from "@/db/schema/content";
 import { eq, sql, desc } from "drizzle-orm";
 import MarkdownCard from "@/components/MarkdownCard";
-import ToolCard from "@/components/ToolCard";
 import ArticleCard from "@/components/ArticleCard";
-import GenAICard from "@/components/GenAICard";
 import GithubCard from "@/components/GithubCard";
+import ResourceCard from "@/components/ResourceCard";
+import YoutubeVideoCard from "@/components/YoutubeVideoCard";
+import YoutubeChannelCard from "@/components/YoutubeChannelCard";
 
 interface SidebarSectionPageProps {
   slug: string;
@@ -22,9 +23,10 @@ export default async function SidebarSectionPage({ slug, title, subtitle }: Side
     .select({
       id: bookmarks.id,
       sidebarOption: bookmarks.sidebarOption,
-      categorySlug: categories.slug, // 'apps-and-tools', 'articles', 'md'
+      categorySlug: categories.slug, // 'apps-and-tools', 'articles', 'md', 'youtube'
       
       // Coalesce fields to get the actual content regardless of table
+      // Note: YouTube resources are now stored in appsAndTools (mapped to toolName)
       title: sql<string>`COALESCE(${appsAndTools.toolName}, ${articles.title}, ${markdownPosts.title})`,
       description: sql<string>`COALESCE(${appsAndTools.description}, ${articles.description}, ${markdownPosts.description})`,
       
@@ -67,12 +69,13 @@ export default async function SidebarSectionPage({ slug, title, subtitle }: Side
               // 1. Sidebar Specific Overrides
               if (res.sidebarOption === 'gen-ai') {
                 return (
-                  <GenAICard 
+                  <ResourceCard 
                     key={res.id}
                     title={res.title}
                     description={res.description}
                     url={res.url}
                     imageUrl={res.imageUrl}
+                    label="AI Tool"
                   />
                 );
               }
@@ -118,15 +121,46 @@ export default async function SidebarSectionPage({ slug, title, subtitle }: Side
                 );
               }
 
+              if (res.categorySlug === 'youtube') {
+                 // Detect channel vs video from URL
+                 const isChannel = res.url.includes('/channel/') || 
+                                   res.url.includes('/c/') || 
+                                   res.url.includes('/user/') || 
+                                   res.url.includes('@');
+                 
+                 if (isChannel) {
+                    return (
+                        <YoutubeChannelCard
+                            key={res.id}
+                            title={res.title}
+                            description={res.description}
+                            url={res.url}
+                            imageUrl={res.imageUrl}
+                        />
+                    );
+                 }
+                 return (
+                    <YoutubeVideoCard
+                        key={res.id}
+                        title={res.title}
+                        description={res.description}
+                        url={res.url}
+                        imageUrl={res.imageUrl}
+                        date={res.createdAt}
+                    />
+                 );
+              }
+
               // 3. Default Fallback (Tools)
               return (
-                <ToolCard
+                <ResourceCard
                   key={res.id}
                   title={res.title}
                   description={res.description}
                   url={res.url}
                   imageUrl={res.imageUrl}
-                  createdAt={res.createdAt}
+                  date={res.createdAt}
+                  label="Tool"
                 />
               );
             })}

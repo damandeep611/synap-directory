@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { bookmarks, appsAndTools, articles, categories } from "@/db/schema/content";
+import { bookmarks, appsAndTools, articles, categories, markdownPosts } from "@/db/schema/content";
 import { auth } from "@/utils/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -23,6 +23,7 @@ cloudinary.config({
 const SUPPORTED_CATEGORIES = [
   { name: "Apps & Tools", slug: "apps-and-tools" },
   { name: "Articles", slug: "articles" },
+  { name: "YouTube", slug: "youtube" },
 ];
 
 // -- Schemas --
@@ -182,6 +183,20 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
           imageUrl: imageUrl,
         });
         revalidatePath("/articles");
+        break;
+      case "youtube":
+        // YouTube items are now stored in appsAndTools (or similar),
+        // we distinguish them by sidebarOption or inference in the UI.
+        // Using appsAndTools as a generic resource holder.
+        await db.insert(appsAndTools).values({
+          id: randomUUID(),
+          bookmarkId: bookmarkId,
+          url: url,
+          toolName: title, // Map title to toolName
+          description: description,
+          imageUrl: imageUrl,
+        });
+        revalidatePath("/youtube");
         break;
       default:
         throw new Error(`No handler for category type: ${category.slug}`);

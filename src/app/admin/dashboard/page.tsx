@@ -110,6 +110,8 @@ export default function AdminDashboard() {
     const category = categories.find((c) => c.id === selectedCategory);
     if (category && category.slug === "articles") {
       setSelectedSidebarOption("articles");
+    } else if (category && category.slug === "youtube") {
+      // Logic for auto-selecting sidebar if needed
     }
   }, [selectedCategory, categories]);
 
@@ -303,7 +305,7 @@ export default function AdminDashboard() {
                     {/* Mode Toggle */}
                     <div className="bg-white/5 p-1 rounded-lg flex items-center">
                       <button
-                        onClick={() => setResourceType("link")}
+                        onClick={() => { setResourceType("link"); setStep("input"); }}
                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
                           resourceType === "link"
                             ? "bg-white/10 text-white shadow-sm"
@@ -314,7 +316,7 @@ export default function AdminDashboard() {
                         Link
                       </button>
                       <button
-                        onClick={() => setResourceType("markdown")}
+                        onClick={() => { setResourceType("markdown"); setStep("input"); }}
                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
                           resourceType === "markdown"
                             ? "bg-white/10 text-white shadow-sm"
