@@ -1,14 +1,14 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { bookmarks, appsAndTools, articles, categories, markdownPosts } from "@/db/schema/content";
+import { bookmarks, appsAndTools, articles, categories, markdownPosts, tags, bookmarkTags } from "@/db/schema/content";
 import { auth } from "@/utils/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import * as cheerio from "cheerio";
 import { v2 as cloudinary } from "cloudinary";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import { randomUUID } from "crypto";
 
@@ -26,6 +26,16 @@ const SUPPORTED_CATEGORIES = [
   { name: "YouTube", slug: "youtube" },
 ];
 
+function slugify(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/[^\w\-]+/g, "") // Remove all non-word chars
+    .replace(/\-\-+/g, "-"); // Replace multiple - with single -
+}
+
 // -- Schemas --
 
 const fetchMetadataSchema = z.object({
@@ -39,9 +49,63 @@ const saveBookmarkSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
   imageUrl: z.string().optional(),
+  tagIds: z.array(z.string()).optional(),
+});
+
+const createTagSchema = z.object({
+  name: z.string().min(1),
+  categoryId: z.string().min(1),
 });
 
 // -- Actions --
+
+export async function getTagsByCategory(categoryId: string) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session || session.user.role !== "admin") return { success: false, error: "Unauthorized" };
+
+    const categoryTags = await db.select().from(tags).where(eq(tags.categoryId, categoryId));
+    return { success: true, data: categoryTags };
+  } catch (error) {
+    console.error("Failed to fetch tags:", error);
+    return { success: false, error: "Failed to fetch tags" };
+  }
+}
+
+export async function createTag(input: z.infer<typeof createTagSchema>) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session || session.user.role !== "admin") return { success: false, error: "Unauthorized" };
+    
+    const validated = createTagSchema.safeParse(input);
+    if (!validated.success) return { success: false, error: validated.error.issues[0].message };
+
+    const { name, categoryId } = validated.data;
+    const slug = slugify(name);
+
+    // Check for duplicate slug in this category
+    const existing = await db.select().from(tags).where(
+      and(eq(tags.slug, slug), eq(tags.categoryId, categoryId))
+    );
+    
+    if (existing.length > 0) {
+       return { success: false, error: "Tag already exists in this category" };
+    }
+
+    const newTagId = randomUUID();
+    await db.insert(tags).values({
+      id: newTagId,
+      categoryId,
+      name,
+      slug,
+    });
+
+    return { success: true, data: { id: newTagId, name, slug } };
+  } catch (error) {
+    console.error("Failed to create tag:", error);
+    return { success: false, error: "Failed to create tag" };
+  }
+}
 
 export async function getCategories() {
   try {
@@ -117,8 +181,9 @@ export async function fetchUrlMetadata(input: z.infer<typeof fetchMetadataSchema
         finalImageUrl = uploadResponse.secure_url;
       } catch (uploadError) {
         console.error("Cloudinary upload failed:", uploadError);
-        // Fallback: use the raw URL if upload fails, or leave empty
-        finalImageUrl = rawImageUrl.startsWith("http") ? rawImageUrl : ""; 
+        // Fallback: Use empty string so UI renders a gradient placeholder
+        // instead of using a raw URL that would break next/image remotePatterns
+        finalImageUrl = ""; 
       }
     }
 
@@ -147,7 +212,7 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
     const validated = saveBookmarkSchema.safeParse(input);
     if (!validated.success) return { success: false, error: validated.error.issues[0].message };
 
-    const { url, categoryId, sidebarOption, title, description, imageUrl } = validated.data;
+    const { url, categoryId, sidebarOption, title, description, imageUrl, tagIds } = validated.data;
 
     // 3. Get Category
     const [category] = await db.select().from(categories).where(eq(categories.id, categoryId));
@@ -161,6 +226,16 @@ export async function saveBookmark(input: z.infer<typeof saveBookmarkSchema>) {
       categoryId: categoryId,
       sidebarOption: sidebarOption,
     });
+
+    // Handle tags
+    if (tagIds && tagIds.length > 0) {
+      for (const tagId of tagIds) {
+        await db.insert(bookmarkTags).values({
+          bookmarkId: bookmarkId,
+          tagId: tagId,
+        }).onConflictDoNothing();
+      }
+    }
 
     switch (category.slug) {
       case "apps-and-tools":

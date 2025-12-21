@@ -23,6 +23,8 @@ import {
   getCategories,
   getAllBookmarks,
   deleteBookmark,
+  getTagsByCategory,
+  createTag,
 } from "@/actions/bookmarks";
 import { createMarkdownPost } from "@/actions/markdown-posts";
 import toast from "react-hot-toast";
@@ -35,6 +37,12 @@ interface ResourceItem {
   type: string;
   createdAt: Date;
   sidebarOption: string | null;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 export default function AdminDashboard() {
@@ -58,6 +66,12 @@ export default function AdminDashboard() {
     description: "",
     imageUrl: "",
   });
+
+  // Tag State
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [newTagName, setNewTagName] = useState("");
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
 
   // Markdown Data State
   const [mdFormData, setMdFormData] = useState({
@@ -105,6 +119,20 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  // Fetch tags when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      const loadTags = async () => {
+        const res = await getTagsByCategory(selectedCategory);
+        if (res.success && res.data) {
+          setAvailableTags(res.data);
+          setSelectedTagIds([]); // Reset selections when category changes
+        }
+      };
+      loadTags();
+    }
+  }, [selectedCategory]);
+
   // Auto-select sidebar option based on resource type
   useEffect(() => {
     const category = categories.find((c) => c.id === selectedCategory);
@@ -118,6 +146,37 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     await signOut();
     router.push("/admin");
+  };
+
+  const handleCreateTag = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTagName || !selectedCategory) return;
+
+    setIsCreatingTag(true);
+    try {
+      const res = await createTag({ name: newTagName, categoryId: selectedCategory });
+      if (res.success && res.data) {
+        setAvailableTags((prev) => [...prev, res.data as Tag]);
+        setSelectedTagIds((prev) => [...prev, (res.data as Tag).id]);
+        setNewTagName("");
+        toast.success("Tag created!");
+      } else {
+        toast.error(res.error || "Failed to create tag");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error creating tag");
+    } finally {
+      setIsCreatingTag(false);
+    }
+  };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
+    );
   };
 
   const handleDelete = async (id: string) => {
@@ -187,6 +246,7 @@ export default function AdminDashboard() {
         title: formData.title,
         description: formData.description,
         imageUrl: formData.imageUrl,
+        tagIds: selectedTagIds,
       });
 
       if (result.success) {
@@ -195,6 +255,7 @@ export default function AdminDashboard() {
         setUrl("");
         setStep("input");
         setFormData({ title: "", description: "", imageUrl: "" });
+        setSelectedTagIds([]);
         loadResources();
       } else {
         toast.error(`Error: ${result.error}`);
@@ -368,7 +429,7 @@ export default function AdminDashboard() {
                       </form>
                     ) : (
                       /* Step 2: Preview & Save */
-                      <form className="space-y-6" onSubmit={handleSave}>
+                      <form className="space-y-8" onSubmit={handleSave}>
                         <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
                           <span className="text-sm text-white/50 truncate max-w-75">
                             {url}
@@ -382,124 +443,193 @@ export default function AdminDashboard() {
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {/* Category/Type Select */}
-                          <div className="space-y-2">
-                            <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                              Resource Type
-                            </label>
-                            <div className="relative">
-                              <select
-                                value={selectedCategory}
-                                onChange={(e) =>
-                                  setSelectedCategory(e.target.value)
-                                }
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all appearance-none text-white"
-                              >
-                                {categories.length === 0 ? (
-                                  <option value="" disabled>
-                                    No categories found
-                                  </option>
-                                ) : (
-                                  categories
-                                    .filter((c) => c.slug !== "md")
-                                    .map((cat) => (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                          {/* Left Column: Form Details */}
+                          <div className="lg:col-span-2 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Category/Type Select */}
+                              <div className="space-y-2">
+                                <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                  Resource Type
+                                </label>
+                                <div className="relative">
+                                  <select
+                                    value={selectedCategory}
+                                    onChange={(e) =>
+                                      setSelectedCategory(e.target.value)
+                                    }
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all appearance-none text-white"
+                                  >
+                                    {categories.length === 0 ? (
+                                      <option value="" disabled>
+                                        No categories found
+                                      </option>
+                                    ) : (
+                                      categories
+                                        .filter((c) => c.slug !== "md")
+                                        .map((cat) => (
+                                          <option
+                                            key={cat.id}
+                                            value={cat.id}
+                                            className="bg-black"
+                                          >
+                                            {cat.name}
+                                          </option>
+                                        ))
+                                    )}
+                                  </select>
+                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <ChevronDown size={16} />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Sidebar Section Select */}
+                              <div className="space-y-2">
+                                <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                  Sidebar Section
+                                </label>
+                                <div className="relative">
+                                  <select
+                                    value={selectedSidebarOption}
+                                    onChange={(e) =>
+                                      setSelectedSidebarOption(e.target.value)
+                                    }
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all appearance-none text-white"
+                                  >
+                                    {CATEGORY_SIDEBAR_ITEMS.map((item) => (
                                       <option
-                                        key={cat.id}
-                                        value={cat.id}
+                                        key={item.id}
+                                        value={item.id}
                                         className="bg-black"
                                       >
-                                        {cat.name}
+                                        {item.label}
                                       </option>
-                                    ))
-                                )}
-                              </select>
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <ChevronDown size={16} />
+                                    ))}
+                                  </select>
+                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <ChevronDown size={16} />
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Sidebar Section Select */}
-                          <div className="space-y-2">
-                            <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                              Sidebar Section
-                            </label>
-                            <div className="relative">
-                              <select
-                                value={selectedSidebarOption}
+                            <div className="space-y-2">
+                              <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                Title
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.title}
                                 onChange={(e) =>
-                                  setSelectedSidebarOption(e.target.value)
+                                  setFormData({
+                                    ...formData,
+                                    title: e.target.value,
+                                  })
                                 }
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all appearance-none text-white"
-                              >
-                                {CATEGORY_SIDEBAR_ITEMS.map((item) => (
-                                  <option
-                                    key={item.id}
-                                    value={item.id}
-                                    className="bg-black"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                Description
+                              </label>
+                              <textarea
+                                value={formData.description}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    description: e.target.value,
+                                  })
+                                }
+                                rows={3}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
+                              />
+                            </div>
+
+                            {formData.imageUrl && (
+                              <div className="space-y-2">
+                                <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                  Image Preview
+                                </label>
+                                <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-black/50">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={formData.imageUrl}
+                                    alt="Preview"
+                                    className="w-full h-full object-cover opacity-80"
+                                  />
+                                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right Column: Tag Management */}
+                          <div className="space-y-6">
+                            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 space-y-6">
+                              <div className="space-y-4">
+                                <label className="text-xs text-white/40 font-medium tracking-wider uppercase flex items-center gap-2">
+                                  Categorical Tags
+                                  <span className="bg-white/10 text-white/60 px-2 py-0.5 rounded text-[10px]">
+                                    {availableTags.length} available
+                                  </span>
+                                </label>
+                                
+                                <div className="flex flex-wrap gap-2 min-h-24 p-3 bg-black/20 rounded-xl border border-white/5">
+                                  {availableTags.length === 0 ? (
+                                    <p className="text-[11px] text-white/20 italic self-center w-full text-center">
+                                      No tags found for this category
+                                    </p>
+                                  ) : (
+                                    availableTags.map((tag) => (
+                                      <button
+                                        key={tag.id}
+                                        type="button"
+                                        onClick={() => toggleTag(tag.id)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                                          selectedTagIds.includes(tag.id)
+                                            ? "bg-yellow-200/20 border-yellow-200 text-yellow-100 shadow-[0_0_15px_rgba(254,240,138,0.1)]"
+                                            : "bg-white/5 border-white/10 text-white/40 hover:border-white/30"
+                                        }`}
+                                      >
+                                        {tag.name}
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="space-y-3 pt-4 border-t border-white/5">
+                                <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                  Add New Tag
+                                </label>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    value={newTagName}
+                                    onChange={(e) => setNewTagName(e.target.value)}
+                                    placeholder="Tag name..."
+                                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-white/20"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handleCreateTag}
+                                    disabled={!newTagName || isCreatingTag}
+                                    className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition-all disabled:opacity-50"
                                   >
-                                    {item.label}
-                                  </option>
-                                ))}
-                              </select>
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <ChevronDown size={16} />
+                                    {isCreatingTag ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Plus className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-
-                        <div className="space-y-2">
-                          <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                            Title
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.title}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                title: e.target.value,
-                              })
-                            }
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                            Description
-                          </label>
-                          <textarea
-                            value={formData.description}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                description: e.target.value,
-                              })
-                            }
-                            rows={3}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
-                          />
-                        </div>
-
-                        {formData.imageUrl && (
-                          <div className="space-y-2">
-                            <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                              Image Preview
-                            </label>
-                            <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-black/50">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={formData.imageUrl}
-                                alt="Preview"
-                                className="w-full h-full object-cover opacity-80"
-                              />
-                              <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-                            </div>
-                          </div>
-                        )}
 
                         <div className="pt-4">
                           <button

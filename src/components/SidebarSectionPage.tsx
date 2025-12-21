@@ -1,13 +1,8 @@
 import PageHeader from "@/components/PageHeader";
 import { db } from "@/db/drizzle";
-import { bookmarks, appsAndTools, articles, markdownPosts, categories } from "@/db/schema/content";
-import { eq, sql, desc } from "drizzle-orm";
-import MarkdownCard from "@/components/MarkdownCard";
-import ArticleCard from "@/components/ArticleCard";
-import GithubCard from "@/components/GithubCard";
-import ResourceCard from "@/components/ResourceCard";
-import YoutubeVideoCard from "@/components/YoutubeVideoCard";
-import YoutubeChannelCard from "@/components/YoutubeChannelCard";
+import { bookmarks, appsAndTools, articles, markdownPosts, categories, tags, bookmarkTags } from "@/db/schema/content";
+import { eq, sql, desc, inArray } from "drizzle-orm";
+import ResourceFeed from "@/components/ResourceFeed";
 
 interface SidebarSectionPageProps {
   slug: string;
@@ -16,34 +11,74 @@ interface SidebarSectionPageProps {
 }
 
 export default async function SidebarSectionPage({ slug, title, subtitle }: SidebarSectionPageProps) {
-  // We need to fetch all resources tagged with this sidebar option
-  // We join all potential content tables. 
-  
+  // 1. Fetch resources with their tags
+  // We use sql.raw or sql templates for json aggregation in Postgres
   const resources = await db
     .select({
       id: bookmarks.id,
       sidebarOption: bookmarks.sidebarOption,
-      categorySlug: categories.slug, // 'apps-and-tools', 'articles', 'md', 'youtube'
+      categorySlug: categories.slug,
+      categoryId: categories.id,
       
-      // Coalesce fields to get the actual content regardless of table
-      // Note: YouTube resources are now stored in appsAndTools (mapped to toolName)
       title: sql<string>`COALESCE(${appsAndTools.toolName}, ${articles.title}, ${markdownPosts.title})`,
       description: sql<string>`COALESCE(${appsAndTools.description}, ${articles.description}, ${markdownPosts.description})`,
       
-      // Specific fields
-      url: sql<string>`COALESCE(${appsAndTools.url}, ${articles.url})`,
-      imageUrl: sql<string>`COALESCE(${appsAndTools.imageUrl}, ${articles.imageUrl})`,
+      url: sql<string>`COALESCE(${appsAndTools.url}, ${articles.url}, '')`,
+      imageUrl: sql<string>`COALESCE(${appsAndTools.imageUrl}, ${articles.imageUrl}, '')`,
       content: markdownPosts.content,
       
       createdAt: bookmarks.createdAt,
+      
+      // Aggregate tags into a JSON array
+      tags: sql<{id: string, name: string, slug: string}[]>`COALESCE(
+        json_agg(
+          json_build_object('id', ${tags.id}, 'name', ${tags.name}, 'slug', ${tags.slug})
+        ) FILTER (WHERE ${tags.id} IS NOT NULL), 
+        '[]'
+      )`
     })
     .from(bookmarks)
     .innerJoin(categories, eq(bookmarks.categoryId, categories.id))
     .leftJoin(appsAndTools, eq(bookmarks.id, appsAndTools.bookmarkId))
     .leftJoin(articles, eq(bookmarks.id, articles.bookmarkId))
     .leftJoin(markdownPosts, eq(bookmarks.id, markdownPosts.bookmarkId))
+    .leftJoin(bookmarkTags, eq(bookmarks.id, bookmarkTags.bookmarkId))
+    .leftJoin(tags, eq(bookmarkTags.tagId, tags.id))
     .where(eq(bookmarks.sidebarOption, slug))
+    .groupBy(
+        bookmarks.id, 
+        categories.slug, 
+        categories.id,
+        appsAndTools.toolName, 
+        appsAndTools.description, 
+        appsAndTools.url, 
+        appsAndTools.imageUrl,
+        articles.title, 
+        articles.description, 
+        articles.url, 
+        articles.imageUrl,
+        markdownPosts.title, 
+        markdownPosts.description,
+        markdownPosts.content
+    )
     .orderBy(desc(bookmarks.createdAt));
+
+  // 2. Fetch all available tags for this specific category (based on the first resource found or category slug)
+  // Since multiple categories could theoretically have the same sidebarOption (though unlikely in current design),
+  // we fetch tags for all categories found in the resources.
+  const categoryIds = Array.from(new Set(resources.map(r => r.categoryId)));
+  
+  let availableTags: { id: string; name: string; slug: string }[] = [];
+  if (categoryIds.length > 0) {
+    availableTags = await db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        slug: tags.slug,
+      })
+      .from(tags)
+      .where(inArray(tags.categoryId, categoryIds));
+  }
 
   return (
     <div className="min-h-full bg-black text-white">
@@ -62,109 +97,14 @@ export default async function SidebarSectionPage({ slug, title, subtitle }: Side
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8">
-            {resources.map((res) => {
-              // --- SELECTION LOGIC ---
-              
-              // 1. Sidebar Specific Overrides
-              if (res.sidebarOption === 'gen-ai') {
-                return (
-                  <ResourceCard 
-                    key={res.id}
-                    title={res.title}
-                    description={res.description}
-                    url={res.url}
-                    imageUrl={res.imageUrl}
-                    label="AI Tool"
-                  />
-                );
-              }
-
-              if (res.sidebarOption === 'github') {
-                return (
-                  <GithubCard
-                    key={res.id}
-                    title={res.title}
-                    description={res.description}
-                    url={res.url}
-                    imageUrl={res.imageUrl}
-                  />
-                );
-              }
-
-              // 2. Category Based Selection
-              if (res.categorySlug === 'md' && res.content) {
-                return (
-                  <MarkdownCard 
-                    key={res.id}
-                    post={{
-                      id: res.id,
-                      title: res.title,
-                      description: res.description,
-                      content: res.content,
-                      createdAt: res.createdAt
-                    }}
-                  />
-                );
-              }
-
-              if (res.categorySlug === 'articles') {
-                return (
-                  <ArticleCard
-                    key={res.id}
-                    title={res.title}
-                    description={res.description}
-                    url={res.url}
-                    imageUrl={res.imageUrl}
-                    createdAt={res.createdAt}
-                  />
-                );
-              }
-
-              if (res.categorySlug === 'youtube') {
-                 // Detect channel vs video from URL
-                 const isChannel = res.url.includes('/channel/') || 
-                                   res.url.includes('/c/') || 
-                                   res.url.includes('/user/') || 
-                                   res.url.includes('@');
-                 
-                 if (isChannel) {
-                    return (
-                        <YoutubeChannelCard
-                            key={res.id}
-                            title={res.title}
-                            description={res.description}
-                            url={res.url}
-                            imageUrl={res.imageUrl}
-                        />
-                    );
-                 }
-                 return (
-                    <YoutubeVideoCard
-                        key={res.id}
-                        title={res.title}
-                        description={res.description}
-                        url={res.url}
-                        imageUrl={res.imageUrl}
-                        date={res.createdAt}
-                    />
-                 );
-              }
-
-              // 3. Default Fallback (Tools)
-              return (
-                <ResourceCard
-                  key={res.id}
-                  title={res.title}
-                  description={res.description}
-                  url={res.url}
-                  imageUrl={res.imageUrl}
-                  date={res.createdAt}
-                  label="Tool"
-                />
-              );
-            })}
-          </div>
+          <ResourceFeed 
+            resources={resources.map(r => ({
+                ...r,
+                url: r.url || '',
+                imageUrl: r.imageUrl || null,
+            }))} 
+            availableTags={availableTags} 
+          />
         )}
       </div>
     </div>
