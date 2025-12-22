@@ -37,8 +37,10 @@ import {
     getResourceTypes
 } from "@/actions/sidebar";
 import { createMarkdownPost } from "@/actions/markdown-posts";
+import { uploadImage } from "@/actions/upload";
 import toast from "react-hot-toast";
 import TagManager from "@/components/TagManager";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 interface ResourceItem {
   id: string;
@@ -111,6 +113,16 @@ export default function AdminDashboard() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIconUrl, setNewCategoryIconUrl] = useState("");
   const [targetSectionId, setTargetSectionId] = useState("");
+  const [isUploadingIcon, setIsUploadingIcon] = useState(false);
+
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+      type: 'section' | 'category' | 'resource';
+      id: string;
+      title: string;
+      message: string;
+  } | null>(null);
 
   // Tag State
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -166,6 +178,24 @@ export default function AdminDashboard() {
 
   // --- Structure Actions ---
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingIcon(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await uploadImage(formData);
+    if (res.success && res.url) {
+        setNewCategoryIconUrl(res.url);
+        toast.success("Icon uploaded!");
+    } else {
+        toast.error("Failed to upload icon");
+    }
+    setIsUploadingIcon(false);
+  };
+
   const handleCreateSection = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!newSectionTitle) return;
@@ -199,16 +229,50 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteSection = async (id: string) => {
-      if(!confirm("Delete this section and all its categories?")) return;
-      await deleteSidebarSection(id);
-      loadData();
+  const handleDeleteSection = (id: string) => {
+      setModalConfig({
+          type: 'section',
+          id,
+          title: 'Delete Section',
+          message: 'Are you sure you want to delete this section? All categories within it will also be deleted. This action cannot be undone.'
+      });
+      setModalOpen(true);
   };
 
-  const handleDeleteCategory = async (id: string) => {
-      if(!confirm("Delete this category?")) return;
-      await deleteCategory(id);
-      loadData();
+  const handleDeleteCategory = (id: string) => {
+      setModalConfig({
+          type: 'category',
+          id,
+          title: 'Delete Category',
+          message: 'Are you sure you want to delete this category? Resources associated with it may become uncategorized. This action cannot be undone.'
+      });
+      setModalOpen(true);
+  };
+
+  const executeDelete = async () => {
+      if (!modalConfig) return;
+      setIsLoading(true);
+
+      try {
+          if (modalConfig.type === 'section') {
+              await deleteSidebarSection(modalConfig.id);
+              toast.success("Section deleted");
+          } else if (modalConfig.type === 'category') {
+              await deleteCategory(modalConfig.id);
+              toast.success("Category deleted");
+          } else if (modalConfig.type === 'resource') {
+              await deleteBookmark(modalConfig.id);
+              toast.success("Resource deleted");
+          }
+          loadData();
+      } catch (error) {
+          console.error(error);
+          toast.error("Failed to delete item");
+      } finally {
+          setIsLoading(false);
+          setModalOpen(false);
+          setModalConfig(null);
+      }
   };
 
   // --- Resource Actions ---
@@ -334,10 +398,14 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteResource = async (id: string) => {
-      if (!confirm("Delete resource?")) return;
-      await deleteBookmark(id);
-      loadData();
+  const handleDeleteResource = (id: string) => {
+      setModalConfig({
+          type: 'resource',
+          id,
+          title: 'Delete Resource',
+          message: 'Are you sure you want to delete this resource? This action cannot be undone.'
+      });
+      setModalOpen(true);
   };
 
   const resetForm = () => {
@@ -461,13 +529,25 @@ export default function AdminDashboard() {
                                 />
                              </div>
                              <div className="space-y-2">
-                                <label className="text-[10px] text-white/40 uppercase tracking-widest">Category Icon URL</label>
-                                <input 
-                                    value={newCategoryIconUrl}
-                                    onChange={(e) => setNewCategoryIconUrl(e.target.value)}
-                                    placeholder="https://..."
-                                    className="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20"
-                                />
+                                <label className="text-[10px] text-white/40 uppercase tracking-widest">Category Icon</label>
+                                <div className="flex items-center gap-4">
+                                    {newCategoryIconUrl && (
+                                        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center overflow-hidden border border-white/10 shrink-0">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={newCategoryIconUrl} alt="Icon" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <input 
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            disabled={isUploadingIcon}
+                                            className="w-full text-xs text-white/50 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
+                                        />
+                                        {isUploadingIcon && <p className="text-[10px] text-yellow-200 mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Uploading...</p>}
+                                    </div>
+                                </div>
                              </div>
                              <div className="md:col-span-2">
                                 <button className="w-full bg-white text-black text-xs py-3 rounded-lg font-bold tracking-widest uppercase hover:bg-gray-200 transition-colors">
@@ -959,6 +1039,15 @@ export default function AdminDashboard() {
              </div>
              </div>
         )}
+
+        <ConfirmationModal 
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onConfirm={executeDelete}
+            title={modalConfig?.title || ""}
+            message={modalConfig?.message || ""}
+            isLoading={isLoading}
+        />
       </motion.div>
     </div>
   );
