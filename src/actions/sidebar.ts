@@ -1,13 +1,13 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { sidebarSections, categories, resourceTypes } from "@/db/schema/content";
+import { sidebarSections, categories, resourceTypes, bookmarks, appsAndTools, articles, markdownPosts } from "@/db/schema/content";
 import { auth } from "@/utils/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, desc } from "drizzle-orm";
 
 function slugify(text: string) {
   return text
@@ -30,6 +30,74 @@ const createCategorySchema = z.object({
   iconUrl: z.string().optional(),
   iconName: z.string().optional(),
 });
+
+// --- Explore Page Action ---
+
+export async function getExplorePageData() {
+  try {
+    const sections = await db.query.sidebarSections.findMany({
+      orderBy: [asc(sidebarSections.sortOrder)],
+      with: {
+        categories: {
+          orderBy: [asc(categories.name)],
+        }
+      }
+    });
+
+    const sectionsWithData = await Promise.all(sections.map(async (section) => {
+      const categoriesWithItems = await Promise.all(section.categories.map(async (cat) => {
+         const recentBookmarks = await db.query.bookmarks.findMany({
+           where: eq(bookmarks.categoryId, cat.id),
+           limit: 4,
+           orderBy: [desc(bookmarks.createdAt)],
+           with: {
+               appsAndTool: true,
+               article: true,
+               markdownPost: true
+           }
+         });
+         
+         const processedItems = recentBookmarks.map(b => {
+            let title = "Untitled";
+            let description = "";
+            let image = "";
+            let url = "";
+
+            if (b.appsAndTool) {
+              title = b.appsAndTool.toolName;
+              description = b.appsAndTool.description || "";
+              image = b.appsAndTool.imageUrl || "";
+              url = b.appsAndTool.url;
+            } else if (b.article) {
+               title = b.article.title;
+               description = b.article.description || "";
+               image = b.article.imageUrl || "";
+               url = b.article.url;
+            } else if (b.markdownPost) {
+               title = b.markdownPost.title;
+               description = b.markdownPost.description || "";
+               image = ""; // Markdown posts don't have an image field in this schema currently
+               url = `/md/${b.id}`; // Using ID based routing for now
+            }
+            
+            return { id: b.id, title, description, imageUrl: image, url, date: b.createdAt };
+         });
+
+         return { ...cat, items: processedItems };
+      }));
+      
+      // Filter out categories that have no items? 
+      // The user said "show all sidebar categories but not all items". 
+      // So we keep empty categories but maybe show a "Coming soon" message in UI.
+      return { ...section, categories: categoriesWithItems };
+    }));
+
+    return { success: true, data: sectionsWithData };
+  } catch (error) {
+    console.error("Failed to fetch explore page data:", error);
+    return { success: false, error: "Failed to fetch explore page data" };
+  }
+}
 
 // --- Resource Types Actions ---
 export async function getResourceTypes() {
