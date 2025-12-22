@@ -98,8 +98,10 @@ export default function ResourceFeed({ resources, availableTags }: ResourceFeedP
       </div>
 
       {filteredResources.length === 0 && (
-        <div className="p-20 border border-dashed border-white/10 rounded-3xl bg-white/[0.02] text-center">
-          <p className="text-white/30 italic">No resources match the selected filters.</p>
+        <div className="p-20 border border-dashed border-white/10 rounded-3xl bg-white/2 text-center">
+          <p className="text-white/30 italic">
+            No resources match the selected filters.
+          </p>
         </div>
       )}
     </div>
