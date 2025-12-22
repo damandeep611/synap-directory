@@ -87,7 +87,7 @@ export default function ResourceCard({
           </span> */}
         </div>
 
-        <p className="text-sm text-zinc-400 line-clamp-2 leading-relaxed">
+        <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
           {description}
         </p>
 

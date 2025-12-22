@@ -87,13 +87,13 @@ export default async function SidebarSectionPage({
 
   return (
     <div className="min-h-full bg-black text-white">
-      <PageHeader 
-        title={category.name} 
-        subtitle={`Explore the best ${category.name} resources`} 
-        category={category.section?.title || "Directory"} 
+      <PageHeader
+        title={category.name}
+        subtitle={`Explore the best ${category.name} resources`}
+        category={category.section?.title || "Directory"}
       />
 
-      <div className="px-8 md:px-12 lg:px-20 pb-12 pt-4">
+      <div className="px-6 pb-12 pt-4">
         {resources.length === 0 ? (
           <div className="p-12 border border-white/10 rounded-2xl bg-white/5 text-center">
             <h3 className="text-xl font-medium text-white mb-2">
