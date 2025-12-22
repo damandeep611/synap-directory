@@ -422,7 +422,7 @@ export default function AdminDashboard() {
   if (isPending || !session) return null;
 
   return (
-    <div className="min-h-screen bg-black text-white p-8 md:p-12 font-sans">
+    <div className="min-h-screen bg-black text-white p-6 md:p-8 font-sans">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -430,9 +430,9 @@ export default function AdminDashboard() {
         className="max-w-7xl mx-auto"
       >
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-5xl md:text-6xl font-serif italic mb-2 tracking-tight">
+            <h1 className="text-4xl md:text-5xl font-serif italic mb-2 tracking-tight">
               System Administration
             </h1>
           </div>
@@ -467,14 +467,14 @@ export default function AdminDashboard() {
 
         {/* --- STRUCTURE TAB --- */}
         {activeTab === "structure" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Section Manager */}
-                <div className="lg:col-span-1 space-y-8">
+                <div className="lg:col-span-1 space-y-6">
                      <div className="bg-[#0A0A0A] rounded-2xl p-6 border border-white/5">
                         <h2 className="text-xl font-serif italic mb-6 flex items-center gap-2">
                             <Layers className="w-4 h-4 text-yellow-200" /> Sidebar Sections
                         </h2>
-                        <form onSubmit={handleCreateSection} className="space-y-4 mb-8">
+                        <form onSubmit={handleCreateSection} className="space-y-4 mb-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] text-white/40 uppercase tracking-widest">New Section Title</label>
                                 <input 
@@ -643,7 +643,7 @@ export default function AdminDashboard() {
 
         {/* --- RESOURCES TAB --- */}
         {activeTab === "resources" && (
-             <div className="flex flex-col gap-16">
+             <div className="flex flex-col gap-10">
              {/* Main Form Section */}
              <div className="w-full">
                <div className="p-1 rounded-3xl bg-linear-to-b from-white/10 to-transparent">
