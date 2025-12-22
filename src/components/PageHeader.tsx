@@ -8,96 +8,73 @@ interface PageHeaderProps {
   title: string;
   subtitle: string;
   category?: string;
+  children?: React.ReactNode;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
   category = "Directory",
+  children,
 }) => {
   return (
-    <section className="relative w-full pt-10 pb-12 px-6 md:px-8 overflow-hidden bg-[#050505] border-b border-white/5">
-      <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 lg:gap-16 items-center">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
+    <section className="relative w-full pt-20 pb-16 px-6 md:px-12 overflow-hidden bg-[#050505] border-b border-white/10">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-500/20 blur-[120px] rounded-full mix-blend-screen opacity-40 animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full mix-blend-screen opacity-30" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto flex flex-col gap-8">
+        {/* Top Row: Meta & Breadcrumbs */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center gap-3"
         >
-          {/* Breadcrumbs - More compact */}
-          <div className="flex items-center gap-2 text-[11px] font-medium tracking-wide mb-4">
-            <Link
-              href="/"
-              className="text-white/30 hover:text-white transition-colors uppercase tracking-wider"
-            >
-              Synap
-            </Link>
-            <span className="text-white/10">/</span>
-            <span className="text-white/30 uppercase tracking-wider">
-              {category}
-            </span>
-            <span className="text-white/10">/</span>
-            <span className="text-white/80 uppercase tracking-wider">
+          <div className="h-px w-8 bg-white/20" />
+          <div className="flex items-center gap-2 text-[11px] font-medium tracking-widest uppercase text-white/50 font-mono">
+            <Link href="/" className="hover:text-white transition-colors">Synap</Link>
+            <span>/</span>
+            <span className="text-white/80">{category}</span>
+          </div>
+        </motion.div>
+
+        <div className="flex flex-col lg:flex-row gap-10 lg:items-end justify-between">
+          {/* Main Content */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="flex-1"
+          >
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white mb-6 leading-[0.9]">
               {title}
-            </span>
-          </div>
-
-          {/* Title - Reduced size */}
-          <h1 className="text-3xl md:text-5xl font-semibold text-white mb-3 tracking-tight leading-tight">
-            {title}
-          </h1>
-
-          {/* Description - Tighter leading and max-width */}
-          <p className="text-base text-white/40 leading-relaxed max-w-2xl font-light">
-            {subtitle}
-          </p>
-        </motion.div>
-
-        {/* Featured Card - Smaller and less intrusive */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="hidden lg:block relative"
-        >
-          {/* Glow effect */}
-          <div className="absolute -inset-1 bg-linear-to-tr from-white/10 via-white/5 to-transparent rounded-2xl blur-lg opacity-30" />
-
-          <div className="relative aspect-video w-full bg-neutral-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-1.5 ring-1 ring-white/5 overflow-hidden">
-            {/* Inner Card Content */}
-            <div className="h-full w-full bg-[#0A0A0A] rounded-xl border border-white/5 relative overflow-hidden flex flex-col p-5">
-              {/* Decorative Grid */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[16px_16px]" />
-
-              {/* Compact Content */}
-              <div className="relative z-10 flex-1 flex flex-col justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                    <div className="w-3 h-3 bg-white/20 rounded-full" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="h-1.5 w-16 bg-white/10 rounded-full" />
-                    <div className="h-1.5 w-10 bg-white/5 rounded-full" />
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-auto border-t border-white/5 flex justify-between items-end">
-                  <div>
-                    <div className="text-[9px] uppercase tracking-widest text-white/20 font-bold mb-0.5">
-                      Status
-                    </div>
-                    <div className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-                      Active
-                    </div>
-                  </div>
-                  <div className="text-xl font-bold text-white/5 italic tracking-tighter">
-                    SYNAP
-                  </div>
-                </div>
-              </div>
+              <span className="text-blue-500">.</span>
+            </h1>
+            
+            <div className="flex flex-col md:flex-row gap-6 md:items-start">
+              <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mt-2 shrink-0 md:block hidden" />
+              <p className="text-lg md:text-xl text-white/60 font-light leading-relaxed max-w-2xl">
+                {subtitle}
+              </p>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+
+          {/* Right/Bottom: Actions & Children */}
+          {children && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="shrink-0"
+            >
+              {children}
+            </motion.div>
+          )}
+        </div>
       </div>
     </section>
   );

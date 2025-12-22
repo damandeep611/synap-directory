@@ -12,9 +12,9 @@ export default async function Home() {
   return (
     <div className="min-h-full bg-black text-white">
       <ExploreHeader
-        title="Boundless Intelligence"
-        subtitle="Journey through the curated landscape of synthetic creativity. From cutting-edge model registries to advanced operational blueprints."
-        category="The Archive"
+        title="Neural Codex"
+        subtitle="A curated registry of synthetic intelligence, cutting-edge tools, and operational blueprints."
+        category="System Core"
         bgImage="/gradients/explore-bg.avif"
       />
 
