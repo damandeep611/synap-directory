@@ -64,6 +64,7 @@ interface Category {
     slug: string;
     sectionId: string | null;
     iconUrl?: string | null;
+    iconName?: string | null;
 }
 
 interface SidebarSection {
@@ -112,6 +113,7 @@ export default function AdminDashboard() {
   const [newSectionTitle, setNewSectionTitle] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIconUrl, setNewCategoryIconUrl] = useState("");
+  const [newCategoryIconName, setNewCategoryIconName] = useState("");
   const [targetSectionId, setTargetSectionId] = useState("");
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
 
@@ -217,12 +219,14 @@ export default function AdminDashboard() {
     const res = await createCategory({ 
         name: newCategoryName, 
         sectionId: targetSectionId,
-        iconUrl: newCategoryIconUrl || undefined
+        iconUrl: newCategoryIconUrl || undefined,
+        iconName: newCategoryIconName || undefined
     });
     if (res.success) {
         toast.success("Category created!", { id: "struct" });
         setNewCategoryName("");
         setNewCategoryIconUrl("");
+        setNewCategoryIconName("");
         loadData();
     } else {
         toast.error("Failed to create category", { id: "struct" });
@@ -528,24 +532,65 @@ export default function AdminDashboard() {
                                     className="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20"
                                 />
                              </div>
-                             <div className="space-y-2">
-                                <label className="text-[10px] text-white/40 uppercase tracking-widest">Category Icon</label>
-                                <div className="flex items-center gap-4">
-                                    {newCategoryIconUrl && (
-                                        <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center overflow-hidden border border-white/10 shrink-0">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img src={newCategoryIconUrl} alt="Icon" className="w-full h-full object-cover" />
+                             <div className="space-y-2 md:col-span-2">
+                                <label className="text-[10px] text-white/40 uppercase tracking-widest">Category Icon (Choose one method)</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Library Selection */}
+                                    <div className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
+                                        <p className="text-[9px] text-white/30 uppercase font-bold">A. Icon Library</p>
+                                        <div className="relative">
+                                            <input 
+                                                value={newCategoryIconName}
+                                                onChange={(e) => {
+                                                    setNewCategoryIconName(e.target.value);
+                                                    if (e.target.value) setNewCategoryIconUrl("");
+                                                }}
+                                                placeholder="e.g. Code, Database, Cpu..."
+                                                className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-white/20"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-white/20 pointer-events-none italic">Lucide Name</span>
                                         </div>
-                                    )}
-                                    <div className="flex-1">
-                                        <input 
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageUpload}
-                                            disabled={isUploadingIcon}
-                                            className="w-full text-xs text-white/50 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
-                                        />
-                                        {isUploadingIcon && <p className="text-[10px] text-yellow-200 mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Uploading...</p>}
+                                        <div className="flex flex-wrap gap-2">
+                                            {["Code", "Database", "Cpu", "Globe", "Zap", "Shield", "Terminal", "Braces"].map(icon => (
+                                                <button 
+                                                    key={icon}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setNewCategoryIconName(icon);
+                                                        setNewCategoryIconUrl("");
+                                                    }}
+                                                    className={`px-2 py-1 rounded-md text-[10px] border transition-colors ${newCategoryIconName === icon ? "bg-white/10 border-white/30 text-white" : "border-white/5 text-white/40 hover:border-white/20"}`}
+                                                >
+                                                    {icon}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Upload Selection */}
+                                    <div className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
+                                        <p className="text-[9px] text-white/30 uppercase font-bold">B. Custom Upload</p>
+                                        <div className="flex items-center gap-4">
+                                            {newCategoryIconUrl && (
+                                                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden border border-white/10 shrink-0">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img src={newCategoryIconUrl} alt="Icon" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                            <div className="flex-1">
+                                                <input 
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        handleImageUpload(e);
+                                                        setNewCategoryIconName("");
+                                                    }}
+                                                    disabled={isUploadingIcon}
+                                                    className="w-full text-[10px] text-white/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
+                                                />
+                                                {isUploadingIcon && <p className="text-[10px] text-yellow-200 mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Uploading...</p>}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                              </div>
@@ -568,7 +613,19 @@ export default function AdminDashboard() {
                                         <ul className="space-y-2">
                                             {section.categories.map(cat => (
                                                 <li key={cat.id} className="flex items-center justify-between text-sm text-white/80 p-2 hover:bg-white/5 rounded-md group">
-                                                    <span>{cat.name}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-5 h-5 flex items-center justify-center bg-white/5 rounded border border-white/5 overflow-hidden">
+                                                            {cat.iconUrl ? (
+                                                                // eslint-disable-next-line @next/next/no-img-element
+                                                                <img src={cat.iconUrl} alt="" className="w-full h-full object-contain" />
+                                                            ) : cat.iconName ? (
+                                                                <span className="text-[8px] text-white/40">{cat.iconName.substring(0, 2)}</span>
+                                                            ) : (
+                                                                <LayoutGrid className="w-3 h-3 text-white/20" />
+                                                            )}
+                                                        </div>
+                                                        <span>{cat.name}</span>
+                                                    </div>
                                                     <button onClick={() => handleDeleteCategory(cat.id)} className="text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <Trash2 className="w-3 h-3" />
                                                     </button>

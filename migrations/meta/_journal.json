@@ -8,6 +8,13 @@
       "when": 1766372348225,
       "tag": "0000_bumpy_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766382570134,
+      "tag": "0001_magenta_genesis",
+      "breakpoints": true
     }
   ]
 }

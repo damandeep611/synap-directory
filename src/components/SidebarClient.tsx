@@ -4,13 +4,13 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import * as LucideIcons from "lucide-react";
 import {
   Compass,
   ShieldAlert,
   Send,
   BarChart3,
   Hash,
-  ChevronRight
 } from "lucide-react";
 
 interface Category {
@@ -18,6 +18,7 @@ interface Category {
     name: string;
     slug: string;
     iconUrl?: string | null;
+    iconName?: string | null;
 }
 
 interface SidebarSection {
@@ -35,6 +36,29 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
   const pathname = usePathname();
 
   const isActiveLink = (href: string) => pathname === href;
+
+  // Helper to resolve icon dynamically (case-insensitive)
+  const getDynamicIcon = (name: string | null | undefined) => {
+    if (!name) return null;
+    const icons: any = LucideIcons;
+    
+    // 1. Direct match
+    if (icons[name]) return icons[name];
+
+    // 2. PascalCase match (e.g. "layout-grid" -> "LayoutGrid" or "cpu" -> "Cpu")
+    // Simple converter: capitalize first letter of each word
+    const pascalName = name
+        .replace(/(^\w|-\w)/g, (clear) => clear.replace(/-/, "").toUpperCase());
+    
+    if (icons[pascalName]) return icons[pascalName];
+
+    // 3. Case-insensitive search (slower but fallback)
+    const lowerName = name.toLowerCase().replace(/-/g, "");
+    const foundKey = Object.keys(icons).find(key => key.toLowerCase() === lowerName);
+    if (foundKey) return icons[foundKey];
+
+    return null;
+  };
 
   // Static top items
   const mainItems = [
@@ -106,11 +130,21 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
                                         />
                                     </div>
                                 ) : (
-                                    <Hash
-                                        className={`size-4 transition-transform duration-300 ${
-                                            active ? "scale-110" : "group-hover:scale-110"
-                                        }`}
-                                    />
+                                    (() => {
+                                        const IconComponent = getDynamicIcon(cat.iconName);
+                                        if (IconComponent) {
+                                            return <IconComponent 
+                                                className={`size-4 transition-transform duration-300 ${
+                                                    active ? "scale-110" : "group-hover:scale-110"
+                                                }`}
+                                            />;
+                                        }
+                                        return <Hash
+                                            className={`size-4 transition-transform duration-300 ${
+                                                active ? "scale-110" : "group-hover:scale-110"
+                                            }`}
+                                        />;
+                                    })()
                                 )}
                                 <span className="text-xs tracking-wider font-medium truncate">{cat.name}</span>
                                 {active && (

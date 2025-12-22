@@ -28,6 +28,7 @@ const createCategorySchema = z.object({
   name: z.string().min(1),
   sectionId: z.string().min(1),
   iconUrl: z.string().optional(),
+  iconName: z.string().optional(),
 });
 
 // --- Resource Types Actions ---
@@ -120,7 +121,7 @@ export async function createCategory(input: z.infer<typeof createCategorySchema>
     const validated = createCategorySchema.safeParse(input);
     if (!validated.success) return { success: false, error: validated.error.issues[0].message };
 
-    const { name, sectionId, iconUrl } = validated.data;
+    const { name, sectionId, iconUrl, iconName } = validated.data;
     const slug = slugify(name);
 
     const newId = randomUUID();
@@ -130,6 +131,7 @@ export async function createCategory(input: z.infer<typeof createCategorySchema>
       slug,
       sectionId,
       iconUrl,
+      iconName,
     });
 
     revalidatePath("/");

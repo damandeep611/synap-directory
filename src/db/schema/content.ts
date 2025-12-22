@@ -26,6 +26,7 @@ export const categories = pgTable("categories", {
   sectionId: text("section_id")
     .references(() => sidebarSections.id, { onDelete: "cascade" }),
   iconUrl: text("icon_url"),
+  iconName: text("icon_name"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
