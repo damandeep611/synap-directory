@@ -6,7 +6,6 @@ interface ResourceCardProps {
   description: string;
   url: string;
   imageUrl: string | null;
-  label?: string;
   date?: Date;
   tags?: { id: string; name: string; slug: string }[];
 }
@@ -16,7 +15,6 @@ export default function ResourceCard({
   description,
   url,
   imageUrl,
-  label = "Resource",
   date,
   tags = [],
 }: ResourceCardProps) {
@@ -91,9 +89,6 @@ export default function ResourceCard({
 
         <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/6">
           <div className="flex items-center gap-3">
-            <span className="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase">
-              {label}
-            </span>
             {date && (
               <span className="text-[10px] text-zinc-600 font-mono">
                 {new Date(date).toLocaleDateString(undefined, {

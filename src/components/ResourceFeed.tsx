@@ -2,11 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import ResourceCard from "./ResourceCard";
-import GithubCard from "./GithubCard";
 import ArticleCard from "./ArticleCard";
 import MarkdownCard from "./MarkdownCard";
-import YoutubeVideoCard from "./YoutubeVideoCard";
-import YoutubeChannelCard from "./YoutubeChannelCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { Filter, X } from "lucide-react";
 
@@ -110,21 +107,6 @@ export default function ResourceFeed({ resources, availableTags }: ResourceFeedP
 }
 
 function renderCard(res: Resource) {
-  // Logic based on categorySlug or other properties
-  // Since we are dynamic, we might not want hardcoded slugs, but for special styling (like Github) we might keep it.
-  
-  if (res.categorySlug === "github") {
-    return (
-      <GithubCard
-        title={res.title}
-        description={res.description}
-        url={res.url}
-        imageUrl={res.imageUrl}
-        tags={res.tags}
-      />
-    );
-  }
-
   // Articles
   if (res.categorySlug === "articles") {
     return (
@@ -155,35 +137,6 @@ function renderCard(res: Resource) {
     );
   }
 
-  // YouTube
-  if (res.categorySlug === "youtube") {
-    const isChannel =
-      res.url.includes("/channel/") ||
-      res.url.includes("/c/") ||
-      res.url.includes("/user/") ||
-      res.url.includes("@");
-
-    if (isChannel) {
-      return (
-        <YoutubeChannelCard
-          title={res.title}
-          description={res.description}
-          url={res.url}
-          imageUrl={res.imageUrl}
-        />
-      );
-    }
-    return (
-      <YoutubeVideoCard
-        title={res.title}
-        description={res.description}
-        url={res.url}
-        imageUrl={res.imageUrl}
-        date={res.createdAt}
-      />
-    );
-  }
-
   // Default Fallback (Tools / AI / Web3 etc)
   return (
     <ResourceCard
@@ -193,7 +146,6 @@ function renderCard(res: Resource) {
       imageUrl={res.imageUrl}
       date={res.createdAt}
       tags={res.tags}
-      label={res.categorySlug === 'artificial-intelligence' ? "AI Tool" : "Tool"}
     />
   );
 }
