@@ -109,6 +109,7 @@ export default function AdminDashboard() {
   // Structure Management State
   const [newSectionTitle, setNewSectionTitle] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryIconUrl, setNewCategoryIconUrl] = useState("");
   const [targetSectionId, setTargetSectionId] = useState("");
 
   // Tag State
@@ -183,10 +184,15 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!newCategoryName || !targetSectionId) return;
     toast.loading("Creating category...", { id: "struct" });
-    const res = await createCategory({ name: newCategoryName, sectionId: targetSectionId });
+    const res = await createCategory({ 
+        name: newCategoryName, 
+        sectionId: targetSectionId,
+        iconUrl: newCategoryIconUrl || undefined
+    });
     if (res.success) {
         toast.success("Category created!", { id: "struct" });
         setNewCategoryName("");
+        setNewCategoryIconUrl("");
         loadData();
     } else {
         toast.error("Failed to create category", { id: "struct" });
@@ -451,6 +457,15 @@ export default function AdminDashboard() {
                                     value={newCategoryName}
                                     onChange={(e) => setNewCategoryName(e.target.value)}
                                     placeholder="e.g. Web3 Tools"
+                                    className="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20"
+                                />
+                             </div>
+                             <div className="space-y-2">
+                                <label className="text-[10px] text-white/40 uppercase tracking-widest">Category Icon URL</label>
+                                <input 
+                                    value={newCategoryIconUrl}
+                                    onChange={(e) => setNewCategoryIconUrl(e.target.value)}
+                                    placeholder="https://..."
                                     className="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20"
                                 />
                              </div>

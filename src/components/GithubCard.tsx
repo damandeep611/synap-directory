@@ -38,7 +38,7 @@ export default function GithubCard({ title, description, url, imageUrl, tags = [
           />
         ) : (
           <div
-            className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${selectedGradient} relative`}
+            className={`w-full h-full flex items-center justify-center bg-linear-to-br ${selectedGradient} relative`}
           >
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
             <Github className="w-12 h-12 text-white/10 z-10 group-hover:text-white/20 transition-colors" />
@@ -54,7 +54,7 @@ export default function GithubCard({ title, description, url, imageUrl, tags = [
       </div>
 
       {/* Content Section */}
-      <div className="p-6 flex flex-col flex-grow relative overflow-hidden">
+      <div className="p-6 flex flex-col grow relative overflow-hidden">
         <div className="flex items-center gap-3 mb-3">
           <div className="p-1.5 rounded bg-white/5 border border-white/10">
             <Github className="w-3 h-3 text-white/80" />

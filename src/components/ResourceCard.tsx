@@ -38,7 +38,7 @@ export default function ResourceCard({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col h-[420px] w-full bg-[#121212] rounded-3xl overflow-hidden border border-white/8 hover:border-white/15 transition-all duration-300 hover:shadow-2xl hover:shadow-black/50"
+      className="group flex flex-col h-105 w-full bg-[#121212] rounded-3xl overflow-hidden border border-white/8 hover:border-white/15 transition-all duration-300 hover:shadow-2xl hover:shadow-black/50"
     >
       {/* Media Section - Top 55% */}
       <div className="relative h-[55%] w-full overflow-hidden bg-[#0A0A0A]">
@@ -50,8 +50,10 @@ export default function ResourceCard({
             className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
           />
         ) : (
-          <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${selectedGradient}`}>
-             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+          <div
+            className={`w-full h-full flex items-center justify-center bg-linear-to-br ${selectedGradient}`}
+          >
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
             <span className="text-4xl font-serif italic font-medium opacity-50 select-none">
               {title.charAt(0)}
             </span>
@@ -67,7 +69,7 @@ export default function ResourceCard({
               {title}
             </h3>
           </div>
-          
+
           <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2 font-medium mb-3">
             {description}
           </p>
@@ -76,7 +78,7 @@ export default function ResourceCard({
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
               {tags.map((tag) => (
-                <span 
+                <span
                   key={tag.id}
                   className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-zinc-500 font-medium"
                 >
