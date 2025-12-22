@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import PageHeader from "@/components/PageHeader";
 import { 
   PenTool, 
   Palette, 
@@ -86,11 +85,6 @@ const categories = [
 export default function BenchmarksPage() {
   return (
     <div className="min-h-full bg-[#050505] text-white pb-20 selection:bg-white/20">
-      <PageHeader 
-        title="Capability Mapping" 
-        subtitle="Editorial breakdown of AI performance across specialized domains."
-        category="Benchmarks"
-      />
       
       <div className="px-8 md:px-12 py-12 space-y-12">
         {categories.map((cat, idx) => (

@@ -1,55 +1,65 @@
 "use server";
 
 import { db } from "@/db/drizzle";
-import { bookmarks, markdownPosts, categories } from "@/db/schema/content";
+import { bookmarks, markdownPosts, resourceTypes, categories } from "@/db/schema/content";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
+import { auth } from "@/utils/auth";
+import { headers } from "next/headers";
 
 export async function createMarkdownPost(formData: FormData) {
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string;
-  const content = formData.get("content") as string;
-  const sidebarOption = formData.get("sidebarOption") as string;
-
-  if (!title || !description || !content) {
-    return { error: "All fields are required" };
-  }
-
   try {
-    // 1. Get the 'md' category
-    const category = await db.query.categories.findFirst({
-      where: eq(categories.slug, "md"),
-    });
+      const session = await auth.api.getSession({ headers: await headers() });
+      if (!session || session.user.role !== "admin") return { success: false, error: "Unauthorized" };
 
-    if (!category) {
-      return { error: "Category 'md' not found" };
-    }
+      const title = formData.get("title") as string;
+      const description = formData.get("description") as string;
+      const content = formData.get("content") as string;
+      const categoryId = formData.get("categoryId") as string;
 
-    // 2. Create Bookmark
-    const bookmarkId = crypto.randomUUID();
-    await db.insert(bookmarks).values({
-      id: bookmarkId,
-      categoryId: category.id,
-      sidebarOption: sidebarOption || null,
-    });
+      if (!title || !description || !content || !categoryId) {
+        return { success: false, error: "All fields are required" };
+      }
 
-    // 3. Create Markdown Post
-    await db.insert(markdownPosts).values({
-      id: crypto.randomUUID(),
-      bookmarkId: bookmarkId,
-      title,
-      description,
-      content,
-    });
+      // 1. Get or Create "Post" Resource Type
+      let [resType] = await db.select().from(resourceTypes).where(eq(resourceTypes.slug, "post"));
+      if (!resType) {
+          const newId = randomUUID();
+          await db.insert(resourceTypes).values({
+              id: newId,
+              name: "Post",
+              slug: "post",
+          });
+          resType = { id: newId, name: "Post", slug: "post", createdAt: new Date() };
+      }
 
-    revalidatePath("/md");
-    if (sidebarOption) {
-      revalidatePath(`/${sidebarOption}`);
-    }
-    
-    return { success: true };
+      // 2. Create Bookmark
+      const bookmarkId = randomUUID();
+      await db.insert(bookmarks).values({
+        id: bookmarkId,
+        resourceTypeId: resType.id,
+        categoryId: categoryId,
+      });
+
+      // 3. Create Markdown Post
+      await db.insert(markdownPosts).values({
+        id: randomUUID(),
+        bookmarkId: bookmarkId,
+        title,
+        description,
+        content,
+      });
+
+      revalidatePath("/admin/dashboard");
+      const [cat] = await db.select().from(categories).where(eq(categories.id, categoryId));
+      if (cat) {
+          revalidatePath(`/${cat.slug}`);
+      }
+      
+      return { success: true };
   } catch (error) {
     console.error("Failed to create markdown post:", error);
-    return { error: "Failed to create post" };
+    return { success: false, error: "Failed to create post" };
   }
 }

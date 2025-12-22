@@ -17,8 +17,8 @@ const main = async () => {
     },
     {
       id: crypto.randomUUID(),
-      name: "MD",
-      slug: "md",
+      name: "Prompts",
+      slug: "prompts",
     },
   ];
 

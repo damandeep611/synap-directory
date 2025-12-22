@@ -1,11 +1,11 @@
 "use client";
 
-import PageHeader from "@/components/PageHeader";
+import ExploreHeader from "@/components/ExploreHeader";
 
 export default function Home() {
   return (
     <div className="min-h-full bg-black text-white">
-      <PageHeader
+      <ExploreHeader
         title="Boundless Intelligence"
         subtitle="Journey through the curated landscape of synthetic creativity. From cutting-edge model registries to advanced operational blueprints."
         category="The Archive"

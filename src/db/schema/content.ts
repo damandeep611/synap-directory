@@ -1,21 +1,42 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-// Categories Table
-export const categories = pgTable("categories", {
+// 1. Resource Types (formerly "categories" table: Apps & Tools, Articles, etc.)
+export const resourceTypes = pgTable("resource_types", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Base Bookmarks Table
+// 2. Sidebar Sections (Headers like "Discover", "Directory", "Tech")
+export const sidebarSections = pgTable("sidebar_sections", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// 3. Categories (Items in Sidebar like "Web3", "AI", "Design")
+export const categories = pgTable("categories", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  sectionId: text("section_id")
+    .references(() => sidebarSections.id, { onDelete: "cascade" }),
+  iconUrl: text("icon_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// 4. Bookmarks
 export const bookmarks = pgTable("bookmarks", {
   id: text("id").primaryKey(),
-  categoryId: text("category_id")
+  resourceTypeId: text("resource_type_id")
     .notNull()
+    .references(() => resourceTypes.id),
+  categoryId: text("category_id")
     .references(() => categories.id),
-  sidebarOption: text("sidebar_option"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   deletedAt: timestamp("deleted_at"),
 });
@@ -62,7 +83,7 @@ export const tags = pgTable("tags", {
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  slug: text("slug").notNull(), // scoped to category conceptually, but unique constraint might be tricky if not careful. For now, simple text.
+  slug: text("slug").notNull(), 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -79,18 +100,33 @@ export const bookmarkTags = pgTable("bookmark_tags", {
 }));
 
 // Relations
-export const categoriesRelations = relations(categories, ({ many }) => ({
+
+export const resourceTypesRelations = relations(resourceTypes, ({ many }) => ({
+  bookmarks: many(bookmarks),
+}));
+
+export const sidebarSectionsRelations = relations(sidebarSections, ({ many }) => ({
+  categories: many(categories),
+}));
+
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  section: one(sidebarSections, {
+    fields: [categories.sectionId],
+    references: [sidebarSections.id],
+  }),
   bookmarks: many(bookmarks),
   tags: many(tags),
 }));
 
 export const bookmarksRelations = relations(bookmarks, ({ one, many }) => ({
+  resourceType: one(resourceTypes, {
+    fields: [bookmarks.resourceTypeId],
+    references: [resourceTypes.id],
+  }),
   category: one(categories, {
     fields: [bookmarks.categoryId],
     references: [categories.id],
   }),
-  // We can't easily do polymorphic relations in Drizzle yet in a single field,
-  // but we can define the inverse relations in the specific tables.
   appsAndTool: one(appsAndTools),
   article: one(articles),
   markdownPost: one(markdownPosts),

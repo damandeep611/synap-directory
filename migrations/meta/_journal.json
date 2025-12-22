@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1766125196160,
-      "tag": "0000_omniscient_skrulls",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1766233218059,
-      "tag": "0001_absurd_swarm",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1766303584531,
-      "tag": "0002_handy_dazzler",
+      "when": 1766372348225,
+      "tag": "0000_bumpy_steel_serpent",
       "breakpoints": true
     }
   ]

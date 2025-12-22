@@ -12,7 +12,6 @@ import { Filter, X } from "lucide-react";
 
 interface Resource {
   id: string;
-  sidebarOption: string | null;
   categorySlug: string;
   title: string;
   description: string;
@@ -111,21 +110,10 @@ export default function ResourceFeed({ resources, availableTags }: ResourceFeedP
 }
 
 function renderCard(res: Resource) {
-  // 1. Sidebar Specific Overrides
-  if (res.sidebarOption === "gen-ai") {
-    return (
-      <ResourceCard
-        title={res.title}
-        description={res.description}
-        url={res.url}
-        imageUrl={res.imageUrl}
-        tags={res.tags}
-        label="AI Tool"
-      />
-    );
-  }
-
-  if (res.sidebarOption === "github") {
+  // Logic based on categorySlug or other properties
+  // Since we are dynamic, we might not want hardcoded slugs, but for special styling (like Github) we might keep it.
+  
+  if (res.categorySlug === "github") {
     return (
       <GithubCard
         title={res.title}
@@ -137,8 +125,23 @@ function renderCard(res: Resource) {
     );
   }
 
-  // 2. Category Based Selection
-  if (res.categorySlug === "md" && res.content) {
+  // Articles
+  if (res.categorySlug === "articles") {
+    return (
+      <ArticleCard
+        title={res.title}
+        description={res.description}
+        url={res.url}
+        imageUrl={res.imageUrl}
+        createdAt={res.createdAt}
+      />
+    );
+  }
+  
+  // Markdown Posts (checking content or specific slug/type)
+  // If we had a resourceType field we would use that. 
+  // For now relying on content presence + slug heuristic if needed.
+  if ((res.categorySlug === "md" || res.categorySlug === "posts") && res.content) {
     return (
       <MarkdownCard
         post={{
@@ -152,18 +155,7 @@ function renderCard(res: Resource) {
     );
   }
 
-  if (res.categorySlug === "articles") {
-    return (
-      <ArticleCard
-        title={res.title}
-        description={res.description}
-        url={res.url}
-        imageUrl={res.imageUrl}
-        createdAt={res.createdAt}
-      />
-    );
-  }
-
+  // YouTube
   if (res.categorySlug === "youtube") {
     const isChannel =
       res.url.includes("/channel/") ||
@@ -192,7 +184,7 @@ function renderCard(res: Resource) {
     );
   }
 
-  // 3. Default Fallback (Tools)
+  // Default Fallback (Tools / AI / Web3 etc)
   return (
     <ResourceCard
       title={res.title}
@@ -201,7 +193,7 @@ function renderCard(res: Resource) {
       imageUrl={res.imageUrl}
       date={res.createdAt}
       tags={res.tags}
-      label="Tool"
+      label={res.categorySlug === 'artificial-intelligence' ? "AI Tool" : "Tool"}
     />
   );
 }
