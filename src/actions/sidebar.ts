@@ -7,7 +7,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { eq, asc, desc } from "drizzle-orm";
+import { eq, asc, desc, ilike, or } from "drizzle-orm";
 
 function slugify(text: string) {
   return text
@@ -102,8 +102,16 @@ export async function getExplorePageData() {
   }
 }
 
-export async function getPromptsData() {
+export async function getPromptsData(query?: string) {
   try {
+    let whereClause = undefined;
+    if (query) {
+        whereClause = or(
+            ilike(markdownPosts.title, `%${query}%`),
+            ilike(markdownPosts.description, `%${query}%`)
+        );
+    }
+
     const posts = await db
         .select({
             id: bookmarks.id,
@@ -114,6 +122,7 @@ export async function getPromptsData() {
         })
         .from(markdownPosts)
         .innerJoin(bookmarks, eq(markdownPosts.bookmarkId, bookmarks.id))
+        .where(whereClause)
         .orderBy(desc(bookmarks.createdAt));
 
     const processed = posts.map(post => ({

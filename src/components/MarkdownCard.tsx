@@ -27,42 +27,46 @@ export default function MarkdownCard({ post }: MarkdownCardProps) {
   };
 
   return (
-    <div className="group relative flex flex-col h-[480px] bg-[#0A0A0A] border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:border-yellow-400/20 shadow-2xl">
-      <div className="p-8 flex flex-col h-full">
+    <div className="group relative flex flex-col h-[350px] bg-[#080808] border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 hover:border-blue-500/30 hover:bg-[#0A0A0A] shadow-2xl">
+      <div className="p-6 flex flex-col h-full">
         {/* Header */}
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl md:text-2xl font-serif font-bold tracking-tight text-white uppercase leading-tight max-w-[80%]">
+        <div className="flex justify-between items-start mb-1.5">
+          <h3 className="text-lg font-bold tracking-tight text-white leading-tight max-w-[85%] group-hover:text-blue-200 transition-colors">
             {post.title}
           </h3>
-          <div className="flex flex-col gap-3 items-end">
-            <span className="px-2 py-0.5 rounded-md border border-white/20 text-[9px] font-mono text-white/40 uppercase tracking-widest bg-white/5">
+          <div className="flex flex-col gap-2 items-end">
+            <span className="px-1.5 py-0.5 rounded border border-white/10 text-[8px] font-mono text-white/30 uppercase tracking-[0.2em] bg-white/[0.02]">
               MD
             </span>
-            <button 
-              onClick={handleCopy}
-              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all border border-white/5 hover:border-white/10 group/copy"
-              title="Copy prompt"
-            >
-              {copied ? <Check className="w-4 h-4 text-yellow-400" /> : <Copy className="w-4 h-4 group-hover/copy:scale-110 transition-transform" />}
-            </button>
           </div>
         </div>
 
-        <p className="text-xs md:text-sm text-white/40 font-light mb-8 tracking-wide">
+        <p className="text-[11px] text-white/30 font-light mb-4 tracking-wide line-clamp-1">
           {post.description}
         </p>
 
-        <div className="h-[1px] w-full bg-white/10 mb-8" />
+        <div className="h-px w-full bg-white/5 mb-4" />
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
-          <div className="text-white/60 font-sans text-sm leading-relaxed whitespace-pre-wrap pb-4">
+        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar relative z-10">
+          <div className="text-white/50 font-sans text-[12px] leading-relaxed whitespace-pre-wrap pb-6">
             {post.content}
           </div>
         </div>
         
+        {/* Actions - Positioned absolutely for a cleaner bottom */}
+        <div className="absolute bottom-4 right-4 z-20">
+          <button 
+            onClick={handleCopy}
+            className="p-2 rounded-lg bg-white/5 hover:bg-blue-500/20 text-white/20 hover:text-blue-400 transition-all border border-white/5 hover:border-blue-500/30 backdrop-blur-md group/copy"
+            title="Copy prompt"
+          >
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5 group-hover/copy:scale-110 transition-transform" />}
+          </button>
+        </div>
+
         {/* Subtle Gradient at Bottom of Scroll Area */}
-        <div className="absolute bottom-0 inset-x-0 h-12 bg-gradient-to-t from-[#0A0A0A] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-[#080808] via-[#080808]/80 to-transparent pointer-events-none z-10" />
       </div>
     </div>
   );
