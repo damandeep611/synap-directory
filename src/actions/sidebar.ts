@@ -62,33 +62,36 @@ export async function getExplorePageData() {
             let description = "";
             let image = "";
             let url = "";
+            let type = "tool"; // Default to tool
+            let content = null;
 
             if (b.appsAndTool) {
               title = b.appsAndTool.toolName;
               description = b.appsAndTool.description || "";
               image = b.appsAndTool.imageUrl || "";
               url = b.appsAndTool.url;
+              type = "tool";
             } else if (b.article) {
                title = b.article.title;
                description = b.article.description || "";
                image = b.article.imageUrl || "";
                url = b.article.url;
+               type = "article";
             } else if (b.markdownPost) {
                title = b.markdownPost.title;
                description = b.markdownPost.description || "";
-               image = ""; // Markdown posts don't have an image field in this schema currently
-               url = `/md/${b.id}`; // Using ID based routing for now
+               image = ""; 
+               url = `/md/${b.id}`;
+               type = "markdown";
+               content = b.markdownPost.content;
             }
             
-            return { id: b.id, title, description, imageUrl: image, url, date: b.createdAt };
+            return { id: b.id, title, description, imageUrl: image, url, date: b.createdAt, type, content };
          });
 
          return { ...cat, items: processedItems };
       }));
       
-      // Filter out categories that have no items? 
-      // The user said "show all sidebar categories but not all items". 
-      // So we keep empty categories but maybe show a "Coming soon" message in UI.
       return { ...section, categories: categoriesWithItems };
     }));
 
@@ -96,6 +99,36 @@ export async function getExplorePageData() {
   } catch (error) {
     console.error("Failed to fetch explore page data:", error);
     return { success: false, error: "Failed to fetch explore page data" };
+  }
+}
+
+export async function getPromptsData() {
+  try {
+    const posts = await db
+        .select({
+            id: bookmarks.id,
+            title: markdownPosts.title,
+            description: markdownPosts.description,
+            content: markdownPosts.content,
+            createdAt: bookmarks.createdAt,
+        })
+        .from(markdownPosts)
+        .innerJoin(bookmarks, eq(markdownPosts.bookmarkId, bookmarks.id))
+        .orderBy(desc(bookmarks.createdAt));
+
+    const processed = posts.map(post => ({
+        id: post.id,
+        title: post.title,
+        description: post.description || "",
+        content: post.content,
+        createdAt: post.createdAt,
+        type: "markdown"
+    }));
+
+    return { success: true, data: processed };
+  } catch (error) {
+    console.error("Failed to fetch prompts data:", error);
+    return { success: false, error: "Failed to fetch prompts data" };
   }
 }
 

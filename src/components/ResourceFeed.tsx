@@ -122,10 +122,8 @@ function renderCard(res: Resource) {
     );
   }
   
-  // Markdown Posts (checking content or specific slug/type)
-  // If we had a resourceType field we would use that. 
-  // For now relying on content presence + slug heuristic if needed.
-  if ((res.categorySlug === "md" || res.categorySlug === "posts") && res.content) {
+  // Markdown Posts (checking content presence)
+  if (res.content) {
     return (
       <MarkdownCard
         post={{

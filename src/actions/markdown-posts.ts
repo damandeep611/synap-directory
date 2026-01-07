@@ -16,10 +16,10 @@ export async function createMarkdownPost(formData: FormData) {
       const title = formData.get("title") as string;
       const description = formData.get("description") as string;
       const content = formData.get("content") as string;
-      const categoryId = formData.get("categoryId") as string;
+      const categoryId = formData.get("categoryId") as string | null;
 
-      if (!title || !description || !content || !categoryId) {
-        return { success: false, error: "All fields are required" };
+      if (!title || !description || !content) {
+        return { success: false, error: "Title, description and content are required" };
       }
 
       // 1. Get or Create "Post" Resource Type
@@ -39,7 +39,7 @@ export async function createMarkdownPost(formData: FormData) {
       await db.insert(bookmarks).values({
         id: bookmarkId,
         resourceTypeId: resType.id,
-        categoryId: categoryId,
+        categoryId: categoryId || null,
       });
 
       // 3. Create Markdown Post
@@ -52,9 +52,13 @@ export async function createMarkdownPost(formData: FormData) {
       });
 
       revalidatePath("/admin/dashboard");
-      const [cat] = await db.select().from(categories).where(eq(categories.id, categoryId));
-      if (cat) {
-          revalidatePath(`/${cat.slug}`);
+      revalidatePath("/prompts");
+      
+      if (categoryId) {
+          const [cat] = await db.select().from(categories).where(eq(categories.id, categoryId));
+          if (cat) {
+              revalidatePath(`/${cat.slug}`);
+          }
       }
       
       return { success: true };
@@ -62,4 +66,33 @@ export async function createMarkdownPost(formData: FormData) {
     console.error("Failed to create markdown post:", error);
     return { success: false, error: "Failed to create post" };
   }
+}
+
+export async function getMarkdownPostById(bookmarkId: string) {
+    try {
+        const result = await db.query.bookmarks.findFirst({
+            where: eq(bookmarks.id, bookmarkId),
+            with: {
+                markdownPost: true
+            }
+        });
+
+        if (!result || !result.markdownPost) {
+            return { success: false, error: "Post not found" };
+        }
+
+        return {
+            success: true,
+            data: {
+                id: result.id,
+                title: result.markdownPost.title,
+                description: result.markdownPost.description,
+                content: result.markdownPost.content,
+                createdAt: result.createdAt,
+            }
+        };
+    } catch (error) {
+        console.error("Failed to get markdown post:", error);
+        return { success: false, error: "Failed to fetch post" };
+    }
 }

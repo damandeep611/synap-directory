@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, Layers } from 'lucide-react';
 import ExploreHeader from "@/components/ExploreHeader";
 import ResourceCard from "@/components/ResourceCard";
+import MarkdownCard from "@/components/MarkdownCard";
 import { getExplorePageData } from "@/actions/sidebar";
 
 export default async function Home() {
@@ -60,17 +61,33 @@ export default async function Home() {
                   {/* Items Grid */}
                   {category.items.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {category.items.map((item) => (
-                        <ResourceCard
-                          key={item.id}
-                          title={item.title}
-                          description={item.description}
-                          url={item.url}
-                          imageUrl={item.imageUrl}
-                          date={item.date}
-                          tags={[{ id: 'cat', name: category.name, slug: category.slug }]} // Passing category as tag context
-                        />
-                      ))}
+                      {category.items.map((item) => {
+                        if (item.type === 'markdown' && item.content) {
+                            return (
+                                <MarkdownCard 
+                                    key={item.id}
+                                    post={{
+                                        id: item.id,
+                                        title: item.title,
+                                        description: item.description,
+                                        content: item.content,
+                                        createdAt: item.date
+                                    }}
+                                />
+                            );
+                        }
+                        return (
+                            <ResourceCard
+                              key={item.id}
+                              title={item.title}
+                              description={item.description}
+                              url={item.url}
+                              imageUrl={item.imageUrl}
+                              date={item.date}
+                              tags={[{ id: 'cat', name: category.name, slug: category.slug }]} // Passing category as tag context
+                            />
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="w-full h-32 rounded-2xl border border-dashed border-white/10 flex flex-col items-center justify-center text-white/20 bg-white/[0.02]">

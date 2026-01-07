@@ -11,25 +11,27 @@ import {
   Send,
   BarChart3,
   Hash,
+  Terminal,
+  LucideIcon,
 } from "lucide-react";
 
 interface Category {
-    id: string;
-    name: string;
-    slug: string;
-    iconUrl?: string | null;
-    iconName?: string | null;
+  id: string;
+  name: string;
+  slug: string;
+  iconUrl?: string | null;
+  iconName?: string | null;
 }
 
 interface SidebarSection {
-    id: string;
-    title: string;
-    slug: string;
-    categories: Category[];
+  id: string;
+  title: string;
+  slug: string;
+  categories: Category[];
 }
 
 interface SidebarClientProps {
-    sections: SidebarSection[];
+  sections: SidebarSection[];
 }
 
 const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
@@ -62,21 +64,24 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
   // Helper to resolve icon dynamically (case-insensitive)
   const getDynamicIcon = (name: string | null | undefined) => {
     if (!name) return null;
-    const icons: any = LucideIcons;
-    
+    const icons = LucideIcons as unknown as Record<string, LucideIcon>;
+
     // 1. Direct match
     if (icons[name]) return icons[name];
 
     // 2. PascalCase match (e.g. "layout-grid" -> "LayoutGrid" or "cpu" -> "Cpu")
     // Simple converter: capitalize first letter of each word
-    const pascalName = name
-        .replace(/(^\w|-\w)/g, (clear) => clear.replace(/-/, "").toUpperCase());
-    
+    const pascalName = name.replace(/(^\w|-\w)/g, (clear) =>
+      clear.replace(/-/, "").toUpperCase()
+    );
+
     if (icons[pascalName]) return icons[pascalName];
 
     // 3. Case-insensitive search (slower but fallback)
     const lowerName = name.toLowerCase().replace(/-/g, "");
-    const foundKey = Object.keys(icons).find(key => key.toLowerCase() === lowerName);
+    const foundKey = Object.keys(icons).find(
+      (key) => key.toLowerCase() === lowerName
+    );
     if (foundKey) return icons[foundKey];
 
     return null;
@@ -84,8 +89,9 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
 
   // Static top items
   const mainItems = [
-      { label: "Explore", href: "/", icon: Compass },
-      { label: "Benchmarks", href: "/benchmarks", icon: BarChart3 },
+    { label: "Explore", href: "/", icon: Compass },
+    { label: "Benchmarks", href: "/benchmarks", icon: BarChart3 },
+    { label: "Prompt Base", href: "/prompts", icon: Terminal },
   ];
 
   return (

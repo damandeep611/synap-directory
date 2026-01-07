@@ -368,7 +368,11 @@ export default function AdminDashboard() {
 
   const handleSaveResource = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCategoryId) {
+    
+    // Only require category for non-markdown types
+    const isMarkdown = selectedResourceTypeSlug === 'post' || selectedResourceTypeSlug === 'markdown';
+    
+    if (!selectedCategoryId && !isMarkdown) {
         toast.error("Please select a category");
         return;
     }
@@ -386,13 +390,13 @@ export default function AdminDashboard() {
     }
 
     try {
-      if (selectedResourceTypeSlug === 'post' || selectedResourceTypeSlug === 'markdown') {
+      if (isMarkdown) {
            // Markdown Flow
            const data = new FormData();
            data.append("title", resourceFormData.title);
            data.append("description", resourceFormData.description);
            data.append("content", resourceFormData.content);
-           data.append("categoryId", selectedCategoryId);
+           // No categoryId needed for markdown posts as they go to /prompts
            
            const result = await createMarkdownPost(data);
            if (result.success) {
@@ -466,24 +470,28 @@ export default function AdminDashboard() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-             <div className="bg-white/5 p-1 rounded-lg flex items-center">
-                <button
-                    onClick={() => setActiveTab("structure")}
-                    className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
-                        activeTab === "structure" ? "bg-white/10 text-white" : "text-white/40 hover:text-white"
-                    }`}
-                >
-                    <FolderTree className="w-3 h-3" /> Structure
-                </button>
-                <button
-                    onClick={() => setActiveTab("resources")}
-                    className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
-                        activeTab === "resources" ? "bg-white/10 text-white" : "text-white/40 hover:text-white"
-                    }`}
-                >
-                    <LayoutGrid className="w-3 h-3" /> Resources
-                </button>
-             </div>
+            <div className="bg-white/5 p-1 rounded-lg flex items-center">
+              <button
+                onClick={() => setActiveTab("structure")}
+                className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                  activeTab === "structure"
+                    ? "bg-white/10 text-white"
+                    : "text-white/40 hover:text-white"
+                }`}
+              >
+                <FolderTree className="w-3 h-3" /> Structure
+              </button>
+              <button
+                onClick={() => setActiveTab("resources")}
+                className={`px-4 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                  activeTab === "resources"
+                    ? "bg-white/10 text-white"
+                    : "text-white/40 hover:text-white"
+                }`}
+              >
+                <LayoutGrid className="w-3 h-3" /> Resources
+              </button>
+            </div>
 
             <button
               onClick={handleLogout}
@@ -496,661 +504,732 @@ export default function AdminDashboard() {
 
         {/* --- STRUCTURE TAB --- */}
         {activeTab === "structure" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Section Manager */}
-                <div className="lg:col-span-1 space-y-6">
-                     <div className="bg-[#0A0A0A] rounded-2xl p-6 border border-white/5">
-                        <h2 className="text-xl font-serif italic mb-6 flex items-center gap-2">
-                            <Layers className="w-4 h-4 text-yellow-200" /> Sidebar Sections
-                        </h2>
-                        <form onSubmit={handleCreateSection} className="space-y-4 mb-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] text-white/40 uppercase tracking-widest">New Section Title</label>
-                                <input 
-                                    value={newSectionTitle}
-                                    onChange={(e) => setNewSectionTitle(e.target.value)}
-                                    placeholder="e.g. Directory"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20"
-                                />
-                            </div>
-                            <button className="w-full bg-white/10 hover:bg-white/20 text-white text-xs py-2 rounded-lg font-medium transition-colors">
-                                Create Section
-                            </button>
-                        </form>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Section Manager */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-[#0A0A0A] rounded-2xl p-6 border border-white/5">
+                <h2 className="text-xl font-serif italic mb-6 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-yellow-200" /> Sidebar
+                  Sections
+                </h2>
+                <form onSubmit={handleCreateSection} className="space-y-4 mb-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-white/40 uppercase tracking-widest">
+                      New Section Title
+                    </label>
+                    <input
+                      value={newSectionTitle}
+                      onChange={(e) => setNewSectionTitle(e.target.value)}
+                      placeholder="e.g. Directory"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20"
+                    />
+                  </div>
+                  <button className="w-full bg-white/10 hover:bg-white/20 text-white text-xs py-2 rounded-lg font-medium transition-colors">
+                    Create Section
+                  </button>
+                </form>
 
-                        <div className="space-y-2">
-                            {sections.map(section => (
-                                <div key={section.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg group">
-                                    <span className="text-sm font-medium">{section.title}</span>
-                                    <button onClick={() => handleDeleteSection(section.id)} className="text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Trash2 className="w-3 h-3" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                     </div>
+                <div className="space-y-2">
+                  {sections.map((section) => (
+                    <div
+                      key={section.id}
+                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg group"
+                    >
+                      <span className="text-sm font-medium">
+                        {section.title}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteSection(section.id)}
+                        className="text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-
-                {/* Category Manager */}
-                <div className="lg:col-span-2 space-y-8">
-                     <div className="bg-[#0A0A0A] rounded-2xl p-6 border border-white/5 h-full">
-                        <h2 className="text-xl font-serif italic mb-6 flex items-center gap-2">
-                            <FolderTree className="w-4 h-4 text-yellow-200" /> Category Hierarchy
-                        </h2>
-
-                        <form onSubmit={handleCreateCategory} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-4 bg-white/[0.02] rounded-xl border border-white/5">
-                             <div className="space-y-2">
-                                <label className="text-[10px] text-white/40 uppercase tracking-widest">Parent Section</label>
-                                <div className="relative">
-                                    <select 
-                                        value={targetSectionId}
-                                        onChange={(e) => setTargetSectionId(e.target.value)}
-                                        className="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20 appearance-none text-white"
-                                    >
-                                        {sections.map(s => <option key={s.id} value={s.id} className="bg-[#0A0A0A] text-white">{s.title}</option>)}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
-                                </div>
-                             </div>
-                             <div className="space-y-2">
-                                <label className="text-[10px] text-white/40 uppercase tracking-widest">Category Name</label>
-                                <input 
-                                    value={newCategoryName}
-                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                    placeholder="e.g. Web3 Tools"
-                                    className="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20"
-                                />
-                             </div>
-                             <div className="space-y-2 md:col-span-2">
-                                <label className="text-[10px] text-white/40 uppercase tracking-widest">Category Icon (Choose one method)</label>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Library Selection */}
-                                    <div className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
-                                        <p className="text-[9px] text-white/30 uppercase font-bold">A. Icon Library</p>
-                                        <div className="relative">
-                                            <input 
-                                                value={newCategoryIconName}
-                                                onChange={(e) => {
-                                                    setNewCategoryIconName(e.target.value);
-                                                    if (e.target.value) setNewCategoryIconUrl("");
-                                                }}
-                                                placeholder="e.g. Code, Database, Cpu..."
-                                                className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-white/20"
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-white/20 pointer-events-none italic">Lucide Name</span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {["Code", "Database", "Cpu", "Globe", "Zap", "Shield", "Terminal", "Braces"].map(icon => (
-                                                <button 
-                                                    key={icon}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setNewCategoryIconName(icon);
-                                                        setNewCategoryIconUrl("");
-                                                    }}
-                                                    className={`px-2 py-1 rounded-md text-[10px] border transition-colors ${newCategoryIconName === icon ? "bg-white/10 border-white/30 text-white" : "border-white/5 text-white/40 hover:border-white/20"}`}
-                                                >
-                                                    {icon}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Upload Selection */}
-                                    <div className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
-                                        <p className="text-[9px] text-white/30 uppercase font-bold">B. Custom Upload</p>
-                                        <div className="flex items-center gap-4">
-                                            {newCategoryIconUrl && (
-                                                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden border border-white/10 shrink-0">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={newCategoryIconUrl} alt="Icon" className="w-full h-full object-cover" />
-                                                </div>
-                                            )}
-                                            <div className="flex-1">
-                                                <input 
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={(e) => {
-                                                        handleImageUpload(e);
-                                                        setNewCategoryIconName("");
-                                                    }}
-                                                    disabled={isUploadingIcon}
-                                                    className="w-full text-[10px] text-white/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
-                                                />
-                                                {isUploadingIcon && <p className="text-[10px] text-yellow-200 mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Uploading...</p>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                             </div>
-                             <div className="md:col-span-2">
-                                <button className="w-full bg-white text-black text-xs py-3 rounded-lg font-bold tracking-widest uppercase hover:bg-gray-200 transition-colors">
-                                    Add Category to {sections.find(s => s.id === targetSectionId)?.title || "Section"}
-                                </button>
-                             </div>
-                        </form>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {sections.map(section => (
-                                <div key={section.id} className="p-4 rounded-xl border border-white/5 bg-white/[0.01]">
-                                    <h3 className="text-xs font-bold text-white/50 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">
-                                        {section.title}
-                                    </h3>
-                                    {section.categories.length === 0 ? (
-                                        <p className="text-white/20 text-xs italic">No categories yet.</p>
-                                    ) : (
-                                        <ul className="space-y-2">
-                                            {section.categories.map(cat => (
-                                                <li key={cat.id} className="flex items-center justify-between text-sm text-white/80 p-2 hover:bg-white/5 rounded-md group">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-5 h-5 flex items-center justify-center bg-white/5 rounded border border-white/5 overflow-hidden">
-                                                            {cat.iconUrl ? (
-                                                                // eslint-disable-next-line @next/next/no-img-element
-                                                                <img src={cat.iconUrl} alt="" className="w-full h-full object-contain" />
-                                                            ) : cat.iconName ? (
-                                                                <span className="text-[8px] text-white/40">{cat.iconName.substring(0, 2)}</span>
-                                                            ) : (
-                                                                <LayoutGrid className="w-3 h-3 text-white/20" />
-                                                            )}
-                                                        </div>
-                                                        <span>{cat.name}</span>
-                                                    </div>
-                                                    <button onClick={() => handleDeleteCategory(cat.id)} className="text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Trash2 className="w-3 h-3" />
-                                                    </button>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                     </div>
-                </div>
+              </div>
             </div>
+
+            {/* Category Manager */}
+            <div className="lg:col-span-2 space-y-8">
+              <div className="bg-[#0A0A0A] rounded-2xl p-6 border border-white/5 h-full">
+                <h2 className="text-xl font-serif italic mb-6 flex items-center gap-2">
+                  <FolderTree className="w-4 h-4 text-yellow-200" /> Category
+                  Hierarchy
+                </h2>
+
+                <form
+                  onSubmit={handleCreateCategory}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-4 bg-white/[0.02] rounded-xl border border-white/5"
+                >
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-white/40 uppercase tracking-widest">
+                      Parent Section
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={targetSectionId}
+                        onChange={(e) => setTargetSectionId(e.target.value)}
+                        className="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20 appearance-none text-white"
+                      >
+                        {sections.map((s) => (
+                          <option
+                            key={s.id}
+                            value={s.id}
+                            className="bg-[#0A0A0A] text-white"
+                          >
+                            {s.title}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-white/40 uppercase tracking-widest">
+                      Category Name
+                    </label>
+                    <input
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="e.g. Web3 Tools"
+                      className="w-full bg-black border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-white/20"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] text-white/40 uppercase tracking-widest">
+                      Category Icon (Choose one method)
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Library Selection */}
+                      <div className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
+                        <p className="text-[9px] text-white/30 uppercase font-bold">
+                          A. Icon Library
+                        </p>
+                        <div className="relative">
+                          <input
+                            value={newCategoryIconName}
+                            onChange={(e) => {
+                              setNewCategoryIconName(e.target.value);
+                              if (e.target.value) setNewCategoryIconUrl("");
+                            }}
+                            placeholder="e.g. Code, Database, Cpu..."
+                            className="w-full bg-black border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-white/20"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-white/20 pointer-events-none italic">
+                            Lucide Name
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            "Code",
+                            "Database",
+                            "Cpu",
+                            "Globe",
+                            "Zap",
+                            "Shield",
+                            "Terminal",
+                            "Braces",
+                          ].map((icon) => (
+                            <button
+                              key={icon}
+                              type="button"
+                              onClick={() => {
+                                setNewCategoryIconName(icon);
+                                setNewCategoryIconUrl("");
+                              }}
+                              className={`px-2 py-1 rounded-md text-[10px] border transition-colors ${
+                                newCategoryIconName === icon
+                                  ? "bg-white/10 border-white/30 text-white"
+                                  : "border-white/5 text-white/40 hover:border-white/20"
+                              }`}
+                            >
+                              {icon}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Upload Selection */}
+                      <div className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
+                        <p className="text-[9px] text-white/30 uppercase font-bold">
+                          B. Custom Upload
+                        </p>
+                        <div className="flex items-center gap-4">
+                          {newCategoryIconUrl && (
+                            <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden border border-white/10 shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={newCategoryIconUrl}
+                                alt="Icon"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                handleImageUpload(e);
+                                setNewCategoryIconName("");
+                              }}
+                              disabled={isUploadingIcon}
+                              className="w-full text-[10px] text-white/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
+                            />
+                            {isUploadingIcon && (
+                              <p className="text-[10px] text-yellow-200 mt-1 flex items-center gap-1">
+                                <Loader2 className="w-3 h-3 animate-spin" />{" "}
+                                Uploading...
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <button className="w-full bg-white text-black text-xs py-3 rounded-lg font-bold tracking-widest uppercase hover:bg-gray-200 transition-colors">
+                      Add Category to{" "}
+                      {sections.find((s) => s.id === targetSectionId)?.title ||
+                        "Section"}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {sections.map((section) => (
+                    <div
+                      key={section.id}
+                      className="p-4 rounded-xl border border-white/5 bg-white/[0.01]"
+                    >
+                      <h3 className="text-xs font-bold text-white/50 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">
+                        {section.title}
+                      </h3>
+                      {section.categories.length === 0 ? (
+                        <p className="text-white/20 text-xs italic">
+                          No categories yet.
+                        </p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {section.categories.map((cat) => (
+                            <li
+                              key={cat.id}
+                              className="flex items-center justify-between text-sm text-white/80 p-2 hover:bg-white/5 rounded-md group"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-5 h-5 flex items-center justify-center bg-white/5 rounded border border-white/5 overflow-hidden">
+                                  {cat.iconUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={cat.iconUrl}
+                                      alt=""
+                                      className="w-full h-full object-contain"
+                                    />
+                                  ) : cat.iconName ? (
+                                    <span className="text-[8px] text-white/40">
+                                      {cat.iconName.substring(0, 2)}
+                                    </span>
+                                  ) : (
+                                    <LayoutGrid className="w-3 h-3 text-white/20" />
+                                  )}
+                                </div>
+                                <span>{cat.name}</span>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* --- RESOURCES TAB --- */}
         {activeTab === "resources" && (
-             <div className="flex flex-col gap-10">
-             {/* Main Form Section */}
-             <div className="w-full">
-               <div className="p-1 rounded-3xl bg-linear-to-b from-white/10 to-transparent">
-                 <div className="bg-[#0A0A0A] rounded-[22px] p-8 border border-white/5 h-full relative overflow-hidden group">
-                   {/* Ambient Glow */}
-                   <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-200/5 rounded-full blur-[100px] pointer-events-none" />
-   
-                   <div className="relative z-10">
-                     <div className="flex items-center justify-between mb-8">
-                       <h2 className="text-2xl font-serif italic flex items-center gap-3">
-                         <Plus className="w-5 h-5 text-yellow-200" />
-                         Add New Resource
-                       </h2>
-   
-                       {/* Mode Toggle */}
-                       <div className="bg-white/5 p-1 rounded-lg flex items-center">
-                         <button
-                           onClick={() => { setSelectedResourceTypeSlug("link"); setStep("input"); }}
-                           className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
-                             selectedResourceTypeSlug === "link"
-                               ? "bg-white/10 text-white shadow-sm"
-                               : "text-white/40 hover:text-white"
-                           }`}
-                         >
-                           <LinkIcon className="w-3 h-3" />
-                           Link
-                         </button>
-                         <button
-                           onClick={() => { setSelectedResourceTypeSlug("post"); setStep("input"); }}
-                           className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
-                             selectedResourceTypeSlug === "post" || selectedResourceTypeSlug === "markdown"
-                               ? "bg-white/10 text-white shadow-sm"
-                               : "text-white/40 hover:text-white"
-                           }`}
-                         >
-                           <FileText className="w-3 h-3" />
-                           Post
-                         </button>
-                       </div>
-                     </div>
-   
-                     {selectedResourceTypeSlug !== "post" && selectedResourceTypeSlug !== "markdown" ? (
-                       /* --- LINK MODE --- */
-                       step === "input" ? (
-                         /* Step 1: Input URL */
-                         <form className="space-y-6" onSubmit={handleAnalyze}>
-                           <div className="space-y-2">
-                             <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                               Source URL / Endpoint
-                             </label>
-                             <input
-                               type="text"
-                               value={url}
-                               onChange={(e) => setUrl(e.target.value)}
-                               placeholder="https://..."
-                               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all placeholder:text-white/20"
-                             />
-                           </div>
-   
-                           <div className="pt-4">
-                             <button
-                               disabled={isLoading || !url}
-                               className="w-full bg-white text-black font-medium tracking-widest text-xs py-4 rounded-xl hover:bg-gray-200 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                             >
-                               {isLoading ? (
-                                 <>
-                                   <Loader2 className="w-4 h-4 animate-spin" />
-                                   Analyzing...
-                                 </>
-                               ) : (
-                                 <>
-                                   <Search className="w-4 h-4" />
-                                   Analyze Resource
-                                 </>
-                               )}
-                             </button>
-                           </div>
-                         </form>
-                       ) : (
-                         /* Step 2: Preview & Save */
-                         <form className="space-y-8" onSubmit={handleSaveResource}>
-                           <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
-                             <span className="text-sm text-white/50 truncate max-w-75">
-                               {url}
-                             </span>
-                             <button
-                               type="button"
-                               onClick={() => setStep("input")}
-                               className="text-xs text-red-400 hover:text-red-300 uppercase tracking-wider font-medium flex items-center gap-1"
-                             >
-                               <X className="w-3 h-3" /> Cancel
-                             </button>
-                           </div>
-   
-                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                             {/* Left Column: Form Details */}
-                             <div className="lg:col-span-2 space-y-6">
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                 {/* Category Select Grouped by Section */}
-                                 <div className="space-y-2 md:col-span-2">
-                                   <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                                     Category
-                                   </label>
-                                   <div className="relative">
-                                     <select
-                                       value={selectedCategoryId}
-                                       onChange={(e) =>
-                                         setSelectedCategoryId(e.target.value)
-                                       }
-                                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all appearance-none text-white"
-                                     >
-                                         <option value="" disabled className="bg-[#0A0A0A] text-white">Select Category</option>
-                                         {sections.map(section => (
-                                             <optgroup key={section.id} label={section.title} className="bg-[#0A0A0A] text-white/50">
-                                                 {section.categories.map(cat => (
-                                                     <option key={cat.id} value={cat.id} className="bg-[#0A0A0A] text-white">
-                                                         {cat.name}
-                                                     </option>
-                                                 ))}
-                                             </optgroup>
-                                         ))}
-                                     </select>
-                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                       <ChevronDown size={16} />
-                                     </div>
-                                   </div>
-                                 </div>
-                               </div>
-   
-                               <div className="space-y-2">
-                                 <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                                   Title
-                                 </label>
-                                 <input
-                                   type="text"
-                                   value={resourceFormData.title}
-                                   onChange={(e) =>
-                                     setResourceFormData({
-                                       ...resourceFormData,
-                                       title: e.target.value,
-                                     })
-                                   }
-                                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
-                                 />
-                               </div>
-   
-                               <div className="space-y-2">
-                                 <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                                   Description
-                                 </label>
-                                 <textarea
-                                   value={resourceFormData.description}
-                                   onChange={(e) =>
-                                     setResourceFormData({
-                                       ...resourceFormData,
-                                       description: e.target.value,
-                                     })
-                                   }
-                                   rows={3}
-                                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
-                                 />
-                               </div>
-   
-                               <div className="space-y-2">
-                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                                      Image Preview
-                                    </label>
-                                    <label className="cursor-pointer text-[10px] text-yellow-200 hover:text-yellow-100 uppercase tracking-widest font-bold flex items-center gap-1">
-                                        <Plus className="w-3 h-3" /> Upload Custom
-                                        <input 
-                                            type="file" 
-                                            accept="image/*" 
-                                            className="hidden" 
-                                            onChange={handleResourceImageUpload}
-                                        />
-                                    </label>
-                                 </div>
-                                 <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-black/50 group/image">
-                                   {resourceFormData.imageUrl ? (
-                                      <>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                          src={resourceFormData.imageUrl}
-                                          alt="Preview"
-                                          className="w-full h-full object-cover opacity-80"
-                                        />
-                                        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-                                      </>
-                                   ) : (
-                                       <div className="flex flex-col items-center justify-center h-full text-white/20">
-                                           <LayoutGrid className="w-8 h-8 mb-2 opacity-50" />
-                                           <span className="text-xs uppercase tracking-widest">No Image</span>
-                                       </div>
-                                   )}
-                                 </div>
-                               </div>
-                             </div>
-   
-                             {/* Right Column: Tag Management */}
-                             <div className="space-y-6">
-                               <TagManager
-                                 availableTags={availableTags}
-                                 selectedTagIds={selectedTagIds}
-                                 onToggleTag={toggleTag}
-                                 onCreateTag={handleCreateTag}
-                               />
-                             </div>
-                           </div>
-   
-                           <div className="pt-4">
-                             <button
-                               disabled={isLoading}
-                               className="w-full bg-white text-black font-medium tracking-widest text-xs py-4 rounded-xl hover:bg-gray-200 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                             >
-                               {isLoading ? (
-                                 <>
-                                   <Loader2 className="w-4 h-4 animate-spin" />
-                                   Saving...
-                                 </>
-                               ) : (
-                                 <>
-                                   <ArrowRight className="w-4 h-4" />
-                                   Push to Registry
-                                 </>
-                               )}
-                             </button>
-                           </div>
-                         </form>
-                       )
-                     ) : (
-                       /* --- MARKDOWN MODE --- */
-                       <form className="space-y-6" onSubmit={handleSaveResource}>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div className="space-y-2">
-                             <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                               Post Title
-                             </label>
-                             <input
-                               type="text"
-                               value={resourceFormData.title}
-                               onChange={(e) =>
-                                 setResourceFormData({
-                                   ...resourceFormData,
-                                   title: e.target.value,
-                                 })
-                               }
-                               placeholder="e.g. The Future of AI"
-                               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all placeholder:text-white/20"
-                             />
-                           </div>
-   
-                           {/* Category Select for MD */}
-                           <div className="space-y-2">
-                             <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                               Category
-                             </label>
-                             <div className="relative">
-                               <select
-                                 value={selectedCategoryId}
-                                 onChange={(e) =>
-                                   setSelectedCategoryId(e.target.value)
-                                 }
-                                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all appearance-none text-white"
-                               >
-                                 <option value="" disabled>Select Category</option>
-                                  {sections.map(section => (
-                                      <optgroup key={section.id} label={section.title}>
-                                          {section.categories.map(cat => (
-                                              <option key={cat.id} value={cat.id}>
-                                                  {cat.name}
-                                              </option>
+          <div className="flex flex-col gap-10">
+            {/* Main Form Section */}
+            <div className="w-full">
+              <div className="p-1 rounded-3xl bg-linear-to-b from-white/10 to-transparent">
+                <div className="bg-[#0A0A0A] rounded-[22px] p-8 border border-white/5 h-full relative overflow-hidden group">
+                  {/* Ambient Glow */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-200/5 rounded-full blur-[100px] pointer-events-none" />
+
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-8">
+                      <h2 className="text-2xl font-serif italic flex items-center gap-3">
+                        <Plus className="w-5 h-5 text-yellow-200" />
+                        Add New Resource
+                      </h2>
+
+                      {/* Mode Toggle */}
+                      <div className="bg-white/5 p-1 rounded-lg flex items-center">
+                        <button
+                          onClick={() => {
+                            setSelectedResourceTypeSlug("link");
+                            setStep("input");
+                          }}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                            selectedResourceTypeSlug === "link"
+                              ? "bg-white/10 text-white shadow-sm"
+                              : "text-white/40 hover:text-white"
+                          }`}
+                        >
+                          <LinkIcon className="w-3 h-3" />
+                          Link
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedResourceTypeSlug("post");
+                            setStep("input");
+                          }}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 ${
+                            selectedResourceTypeSlug === "post" ||
+                            selectedResourceTypeSlug === "markdown"
+                              ? "bg-white/10 text-white shadow-sm"
+                              : "text-white/40 hover:text-white"
+                          }`}
+                        >
+                          <FileText className="w-3 h-3" />
+                          Post
+                        </button>
+                      </div>
+                    </div>
+
+                    {selectedResourceTypeSlug !== "post" &&
+                    selectedResourceTypeSlug !== "markdown" ? (
+                      /* --- LINK MODE --- */
+                      step === "input" ? (
+                        /* Step 1: Input URL */
+                        <form className="space-y-6" onSubmit={handleAnalyze}>
+                          <div className="space-y-2">
+                            <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                              Source URL / Endpoint
+                            </label>
+                            <input
+                              type="text"
+                              value={url}
+                              onChange={(e) => setUrl(e.target.value)}
+                              placeholder="https://..."
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all placeholder:text-white/20"
+                            />
+                          </div>
+
+                          <div className="pt-4">
+                            <button
+                              disabled={isLoading || !url}
+                              className="w-full bg-white text-black font-medium tracking-widest text-xs py-4 rounded-xl hover:bg-gray-200 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                              {isLoading ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Analyzing...
+                                </>
+                              ) : (
+                                <>
+                                  <Search className="w-4 h-4" />
+                                  Analyze Resource
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        /* Step 2: Preview & Save */
+                        <form
+                          className="space-y-8"
+                          onSubmit={handleSaveResource}
+                        >
+                          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+                            <span className="text-sm text-white/50 truncate max-w-75">
+                              {url}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setStep("input")}
+                              className="text-xs text-red-400 hover:text-red-300 uppercase tracking-wider font-medium flex items-center gap-1"
+                            >
+                              <X className="w-3 h-3" /> Cancel
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                            {/* Left Column: Form Details */}
+                            <div className="lg:col-span-2 space-y-6">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Category Select Grouped by Section */}
+                                <div className="space-y-2 md:col-span-2">
+                                  <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                    Category
+                                  </label>
+                                  <div className="relative">
+                                    <select
+                                      value={selectedCategoryId}
+                                      onChange={(e) =>
+                                        setSelectedCategoryId(e.target.value)
+                                      }
+                                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all appearance-none text-white"
+                                    >
+                                      <option
+                                        value=""
+                                        disabled
+                                        className="bg-[#0A0A0A] text-white"
+                                      >
+                                        Select Category
+                                      </option>
+                                      {sections.map((section) => (
+                                        <optgroup
+                                          key={section.id}
+                                          label={section.title}
+                                          className="bg-[#0A0A0A] text-white/50"
+                                        >
+                                          {section.categories.map((cat) => (
+                                            <option
+                                              key={cat.id}
+                                              value={cat.id}
+                                              className="bg-[#0A0A0A] text-white"
+                                            >
+                                              {cat.name}
+                                            </option>
                                           ))}
-                                      </optgroup>
-                                  ))}
-                               </select>
-                               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ">
-                                 <ChevronDown size={16} />
-                               </div>
-                             </div>
-                           </div>
-                         </div>
-   
-                         <div className="space-y-2">
-                           <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                             Description
-                           </label>
-                           <input
-                             type="text"
-                             value={resourceFormData.description}
-                             onChange={(e) =>
-                               setResourceFormData({
-                                 ...resourceFormData,
-                                 description: e.target.value,
-                               })
-                             }
-                             placeholder="Brief summary..."
-                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all placeholder:text-white/20"
-                           />
-                         </div>
-   
-                         <div className="space-y-2">
-                           <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                             Content (Markdown)
-                           </label>
-                           <textarea
-                             value={resourceFormData.content}
-                             onChange={(e) =>
-                               setResourceFormData({
-                                 ...resourceFormData,
-                                 content: e.target.value,
-                               })
-                             }
-                             rows={10}
-                             placeholder="# Hello World..."
-                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all placeholder:text-white/20 font-mono"
-                           />
-                         </div>
-   
-                         <div className="pt-4">
-                           <button
-                             disabled={isLoading}
-                             className="w-full bg-white text-black font-medium tracking-widest text-xs py-4 rounded-xl hover:bg-gray-200 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                           >
-                             {isLoading ? (
-                               <>
-                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                 Publishing...
-                               </>
-                             ) : (
-                               <>
-                                 <ArrowRight className="w-4 h-4" />
-                                 Publish Post
-                               </>
-                             )}
-                           </button>
-                         </div>
-                       </form>
-                     )}
-                   </div>
-                 </div>
-               </div>
-             </div>
-   
-             {/* Library Section */}
-             <div className="w-full">
-               <div className="flex items-center justify-between mb-8">
-                 <div>
-                   <h2 className="text-2xl font-serif italic flex items-center gap-3">
-                     <Search className="w-5 h-5 text-yellow-200" />
-                     Library Registry
-                   </h2>
-                   <p className="text-xs text-white/40 mt-1 uppercase tracking-widest">
-                     Managing {resources.length} active resources
-                   </p>
-                 </div>
-               </div>
-   
-               <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-                 <div className="overflow-x-auto custom-scrollbar">
-                   <table className="w-full text-left border-collapse">
-                     <thead>
-                       <tr className="border-b border-white/5 bg-white/[0.02]">
-                         <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
-                           Resource Details
-                         </th>
-                         <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
-                           Category
-                         </th>
-                         <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
-                            Type
-                          </th>
-                         <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
-                           Date Added
-                         </th>
-                         <th className="px-6 py-4 text-right text-[10px] font-medium text-white/40 uppercase tracking-widest">
-                           Actions
-                         </th>
-                       </tr>
-                     </thead>
-                     <tbody className="divide-y divide-white/5">
-                       {resources.length === 0 ? (
-                         <tr>
-                           <td
-                             colSpan={5}
-                             className="px-6 py-16 text-center text-white/30 text-sm italic"
-                           >
-                             No resources found in the registry.
-                           </td>
-                         </tr>
-                       ) : (
-                         resources.map((item) => (
-                           <tr
-                             key={item.id}
-                             className="group hover:bg-white/[0.03] transition-colors"
-                           >
-                             <td className="px-6 py-4">
-                               <div className="flex flex-col">
-                                 <span className="text-sm font-medium text-white group-hover:text-yellow-100 transition-colors truncate max-w-md">
-                                   {item.title}
-                                 </span>
-                                 {item.url && (
-                                   <a
-                                     href={item.url}
-                                     target="_blank"
-                                     rel="noopener noreferrer"
-                                     className="text-[11px] text-white/30 hover:text-white/60 flex items-center gap-1.5 mt-0.5 transition-colors"
-                                   >
-                                     <ExternalLink className="w-2.5 h-2.5" />
-                                     <span className="truncate max-w-xs">
-                                       {item.url}
-                                     </span>
-                                   </a>
-                                 )}
-                               </div>
-                             </td>
-                             <td className="px-6 py-4">
-                               <span className="text-[10px] uppercase tracking-wider text-yellow-200/80 bg-yellow-900/20 px-2 py-1 rounded-md border border-yellow-200/10 whitespace-nowrap">
-                                 {item.categoryName}
-                               </span>
-                             </td>
-                             <td className="px-6 py-4">
-                               <span className="text-[10px] uppercase tracking-wider text-white/60 px-2 py-1 rounded-md border border-white/10 whitespace-nowrap">
-                                 {item.resourceType}
-                               </span>
-                             </td>
-                             <td className="px-6 py-4">
-                               <span className="text-xs text-white/40 tabular-nums">
-                                 {new Date(item.createdAt).toLocaleDateString(
-                                   undefined,
-                                   {
-                                     year: "numeric",
-                                     month: "short",
-                                     day: "numeric",
-                                   }
-                                 )}
-                               </span>
-                             </td>
-                             <td className="px-6 py-4 text-right">
-                               <div className="flex items-center justify-end gap-2">
-                                 {item.url && (
-                                   <a
-                                     href={item.url}
-                                     target="_blank"
-                                     rel="noopener noreferrer"
-                                     className="p-2 text-white/20 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                                     title="Open Link"
-                                   >
-                                     <ExternalLink className="w-4 h-4" />
-                                   </a>
-                                 )}
-                                 <button
-                                   onClick={() => handleDeleteResource(item.id)}
-                                   className="p-2 text-white/20 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-                                   title="Delete Resource"
-                                 >
-                                   <Trash2 className="w-4 h-4" />
-                                 </button>
-                               </div>
-                             </td>
-                           </tr>
-                         ))
-                       )}
-                     </tbody>
-                   </table>
-                 </div>
-               </div>
-             </div>
-             </div>
+                                        </optgroup>
+                                      ))}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                      <ChevronDown size={16} />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                  Title
+                                </label>
+                                <input
+                                  type="text"
+                                  value={resourceFormData.title}
+                                  onChange={(e) =>
+                                    setResourceFormData({
+                                      ...resourceFormData,
+                                      title: e.target.value,
+                                    })
+                                  }
+                                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                  Description
+                                </label>
+                                <textarea
+                                  value={resourceFormData.description}
+                                  onChange={(e) =>
+                                    setResourceFormData({
+                                      ...resourceFormData,
+                                      description: e.target.value,
+                                    })
+                                  }
+                                  rows={3}
+                                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                    Image Preview
+                                  </label>
+                                  <label className="cursor-pointer text-[10px] text-yellow-200 hover:text-yellow-100 uppercase tracking-widest font-bold flex items-center gap-1">
+                                    <Plus className="w-3 h-3" /> Upload Custom
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={handleResourceImageUpload}
+                                    />
+                                  </label>
+                                </div>
+                                <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-black/50 group/image">
+                                  {resourceFormData.imageUrl ? (
+                                    <>
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={resourceFormData.imageUrl}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover opacity-80"
+                                      />
+                                      <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+                                    </>
+                                  ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-white/20">
+                                      <LayoutGrid className="w-8 h-8 mb-2 opacity-50" />
+                                      <span className="text-xs uppercase tracking-widest">
+                                        No Image
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right Column: Tag Management */}
+                            <div className="space-y-6">
+                              <TagManager
+                                availableTags={availableTags}
+                                selectedTagIds={selectedTagIds}
+                                onToggleTag={toggleTag}
+                                onCreateTag={handleCreateTag}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-4">
+                            <button
+                              disabled={isLoading}
+                              className="w-full bg-white text-black font-medium tracking-widest text-xs py-4 rounded-xl hover:bg-gray-200 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                              {isLoading ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <ArrowRight className="w-4 h-4" />
+                                  Push to Registry
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      )
+                    ) : (
+                      /* --- MARKDOWN MODE --- */
+                      <form className="space-y-6" onSubmit={handleSaveResource}>
+                        <div className="space-y-2">
+                          <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                            Post Title
+                          </label>
+                          <input
+                            type="text"
+                            value={resourceFormData.title}
+                            onChange={(e) =>
+                              setResourceFormData({
+                                ...resourceFormData,
+                                title: e.target.value,
+                              })
+                            }
+                            placeholder="e.g. The Future of AI"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all placeholder:text-white/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                            Description
+                          </label>
+                          <input
+                            type="text"
+                            value={resourceFormData.description}
+                            onChange={(e) =>
+                              setResourceFormData({
+                                ...resourceFormData,
+                                description: e.target.value,
+                              })
+                            }
+                            placeholder="Brief summary..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all placeholder:text-white/20"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                            Content (Markdown)
+                          </label>
+                          <textarea
+                            value={resourceFormData.content}
+                            onChange={(e) =>
+                              setResourceFormData({
+                                ...resourceFormData,
+                                content: e.target.value,
+                              })
+                            }
+                            rows={10}
+                            placeholder="# Hello World..."
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all placeholder:text-white/20 font-mono"
+                          />
+                        </div>
+
+                        <div className="pt-4">
+                          <button
+                            disabled={isLoading}
+                            className="w-full bg-white text-black font-medium tracking-widest text-xs py-4 rounded-xl hover:bg-gray-200 transition-colors uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Publishing...
+                              </>
+                            ) : (
+                              <>
+                                <ArrowRight className="w-4 h-4" />
+                                Publish Post
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Library Section */}
+            <div className="w-full">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-2xl font-serif italic flex items-center gap-3">
+                    <Search className="w-5 h-5 text-yellow-200" />
+                    Library Registry
+                  </h2>
+                  <p className="text-xs text-white/40 mt-1 uppercase tracking-widest">
+                    Managing {resources.length} active resources
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 bg-white/[0.02]">
+                        <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                          Resource Details
+                        </th>
+                        <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                          Category
+                        </th>
+                        <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                          Type
+                        </th>
+                        <th className="px-6 py-4 text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                          Date Added
+                        </th>
+                        <th className="px-6 py-4 text-right text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {resources.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="px-6 py-16 text-center text-white/30 text-sm italic"
+                          >
+                            No resources found in the registry.
+                          </td>
+                        </tr>
+                      ) : (
+                        resources.map((item) => (
+                          <tr
+                            key={item.id}
+                            className="group hover:bg-white/[0.03] transition-colors"
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-white group-hover:text-yellow-100 transition-colors truncate max-w-md">
+                                  {item.title}
+                                </span>
+                                {item.url && (
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[11px] text-white/30 hover:text-white/60 flex items-center gap-1.5 mt-0.5 transition-colors"
+                                  >
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                    <span className="truncate max-w-xs">
+                                      {item.url}
+                                    </span>
+                                  </a>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-[10px] uppercase tracking-wider text-yellow-200/80 bg-yellow-900/20 px-2 py-1 rounded-md border border-yellow-200/10 whitespace-nowrap">
+                                {item.categoryName}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-[10px] uppercase tracking-wider text-white/60 px-2 py-1 rounded-md border border-white/10 whitespace-nowrap">
+                                {item.resourceType}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-xs text-white/40 tabular-nums">
+                                {new Date(item.createdAt).toLocaleDateString(
+                                  undefined,
+                                  {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  }
+                                )}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                {item.url && (
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 text-white/20 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                                    title="Open Link"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                  </a>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteResource(item.id)}
+                                  className="p-2 text-white/20 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                                  title="Delete Resource"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
-        <ConfirmationModal 
-            isOpen={modalOpen}
-            onClose={() => setModalOpen(false)}
-            onConfirm={executeDelete}
-            title={modalConfig?.title || ""}
-            message={modalConfig?.message || ""}
-            isLoading={isLoading}
+        <ConfirmationModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onConfirm={executeDelete}
+          title={modalConfig?.title || ""}
+          message={modalConfig?.message || ""}
+          isLoading={isLoading}
         />
       </motion.div>
     </div>
