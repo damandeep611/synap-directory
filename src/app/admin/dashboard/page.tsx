@@ -198,6 +198,33 @@ export default function AdminDashboard() {
     setIsUploadingIcon(false);
   };
 
+  const handleResourceImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Use a separate loading state or reuse general isLoading if appropriate, 
+    // but here we want to block just the upload interaction potentially.
+    // For simplicity, we'll use a local toast to indicate progress since it's async.
+    const loadingToast = toast.loading("Uploading image...");
+
+    try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await uploadImage(formData);
+        
+        if (res.success && res.url) {
+            setResourceFormData(prev => ({ ...prev, imageUrl: res.url as string }));
+            toast.success("Image uploaded!", { id: loadingToast });
+        } else {
+            toast.error("Failed to upload image", { id: loadingToast });
+        }
+    } catch (error) {
+        console.error("Upload error:", error);
+        toast.error("Error uploading image", { id: loadingToast });
+    }
+  };
+
   const handleCreateSection = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!newSectionTitle) return;
@@ -809,22 +836,40 @@ export default function AdminDashboard() {
                                  />
                                </div>
    
-                               {resourceFormData.imageUrl && (
-                                 <div className="space-y-2">
-                                   <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
-                                     Image Preview
-                                   </label>
-                                   <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-black/50">
-                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                     <img
-                                       src={resourceFormData.imageUrl}
-                                       alt="Preview"
-                                       className="w-full h-full object-cover opacity-80"
-                                     />
-                                     <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-                                   </div>
+                               <div className="space-y-2">
+                                 <div className="flex items-center justify-between">
+                                    <label className="text-xs text-white/40 font-medium tracking-wider uppercase pl-1">
+                                      Image Preview
+                                    </label>
+                                    <label className="cursor-pointer text-[10px] text-yellow-200 hover:text-yellow-100 uppercase tracking-widest font-bold flex items-center gap-1">
+                                        <Plus className="w-3 h-3" /> Upload Custom
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            className="hidden" 
+                                            onChange={handleResourceImageUpload}
+                                        />
+                                    </label>
                                  </div>
-                               )}
+                                 <div className="relative w-full h-48 rounded-xl overflow-hidden border border-white/10 bg-black/50 group/image">
+                                   {resourceFormData.imageUrl ? (
+                                      <>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                          src={resourceFormData.imageUrl}
+                                          alt="Preview"
+                                          className="w-full h-full object-cover opacity-80"
+                                        />
+                                        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+                                      </>
+                                   ) : (
+                                       <div className="flex flex-col items-center justify-center h-full text-white/20">
+                                           <LayoutGrid className="w-8 h-8 mb-2 opacity-50" />
+                                           <span className="text-xs uppercase tracking-widest">No Image</span>
+                                       </div>
+                                   )}
+                                 </div>
+                               </div>
                              </div>
    
                              {/* Right Column: Tag Management */}
