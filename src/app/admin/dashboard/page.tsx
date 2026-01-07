@@ -327,11 +327,13 @@ export default function AdminDashboard() {
         setStep("preview");
         toast.success("URL analyzed successfully");
       } else {
-        toast.error(`Error: ${result.error}`);
+        toast.error(`Analysis failed: ${result.error}. Please enter details manually.`);
+        setStep("preview");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to analyze URL");
+      toast.error("Failed to analyze URL. Switching to manual mode.");
+      setStep("preview");
     } finally {
       setIsLoading(false);
     }
