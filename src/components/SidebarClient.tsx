@@ -89,107 +89,115 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
   ];
 
   return (
-    <aside className="w-64 h-full border-r border-white/5 bg-black/40 backdrop-blur-xl flex flex-col py-6 px-4 fixed left-0 top-0 z-50">
+    <aside className="w-64 h-full border-r border-white/5 bg-zinc-900 flex flex-col py-6 px-4 fixed left-0 top-0 z-50">
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        
         {/* Main Navigation */}
-        <h2 className="text-[9px] tracking-[0.2em] uppercase text-white/30 font-bold mb-3 pl-3">
+        <h2 className="text-[10px] tracking-[0.15em] uppercase text-zinc-500 font-bold mb-3 pl-3">
           Discover
         </h2>
-        <nav className="space-y-0.5 mb-6">
-            {mainItems.map((item) => {
-                const iconColor = getIconColor(item.label);
-                return (
-                  <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-md transition-all duration-300 group
+        <nav className="space-y-1 mb-4">
+          {mainItems.map((item) => {
+            const iconColor = getIconColor(item.label);
+            const active = isActiveLink(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group
                       ${
-                          isActiveLink(item.href)
-                          ? "bg-white/10 text-white"
-                          : "text-white/40 hover:text-white hover:bg-white/5"
+                        active
+                          ? "bg-zinc-800 text-zinc-100 font-medium"
+                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
                       }`}
-                  >
-                      <item.icon
-                          className={`size-3.5 transition-transform duration-300 ${iconColor} ${
-                              isActiveLink(item.href) ? "scale-110 opacity-100" : "opacity-70 group-hover:scale-110 group-hover:opacity-100"
-                          }`}
-                      />
-                      <span className="text-[11px] tracking-wide font-medium">{item.label}</span>
-                      {isActiveLink(item.href) && (
-                          <div className="ml-auto w-1 h-1 rounded-full bg-yellow-200 shadow-[0_0_8px_rgba(254,249,195,0.8)]" />
-                      )}
-                  </Link>
-                );
-            })}
+              >
+                <item.icon
+                  className={`size-4 transition-transform duration-300 ${iconColor} ${
+                    active
+                      ? "opacity-100"
+                      : "opacity-60 group-hover:opacity-100 group-hover:scale-110"
+                  }`}
+                />
+                <span className="text-sm">{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Dynamic Sections */}
         {sections.map((section) => (
-            <div key={section.id} className="mb-6">
-                 <h2 className="text-[9px] tracking-[0.2em] uppercase text-white/30 font-bold mb-3 pl-3">
-                    {section.title}
-                </h2>
-                <nav className="space-y-0.5">
-                    {section.categories.map((cat) => {
-                        const href = `/${cat.slug}`; // Dynamic routing
-                        const active = isActiveLink(href);
-                        const iconColor = getIconColor(cat.name); // Generate consistent color
+          <div key={section.id} className="mb-2 ">
+            <h2 className="text-[10px] tracking-[0.15em] uppercase text-zinc-400 font-bold mb-2 pl-3">
+              {section.title}
+            </h2>
+            <nav className="space-y-1">
+              {section.categories.map((cat) => {
+                const href = `/${cat.slug}`; // Dynamic routing
+                const active = isActiveLink(href);
+                const iconColor = getIconColor(cat.name); // Generate consistent color
 
-                        return (
-                            <Link
-                                key={cat.id}
-                                href={href}
-                                className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-md transition-all duration-300 group
+                return (
+                  <Link
+                    key={cat.id}
+                    href={href}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 group
                                 ${
-                                    active
-                                    ? "bg-white/10 text-white"
-                                    : "text-white/40 hover:text-white hover:bg-white/5"
+                                  active
+                                    ? "bg-zinc-800 text-zinc-100 font-medium"
+                                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
                                 }`}
-                            >
-                                {cat.iconUrl ? (
-                                    <div className={`relative w-3.5 h-3.5 transition-transform duration-300 ${active ? "scale-110" : "group-hover:scale-110"}`}>
-                                        <Image 
-                                            src={cat.iconUrl} 
-                                            alt={cat.name} 
-                                            fill 
-                                            className="object-contain"
-                                        />
-                                    </div>
-                                ) : (
-                                    (() => {
-                                        const IconComponent = getDynamicIcon(cat.iconName);
-                                        if (IconComponent) {
-                                            return <IconComponent 
-                                                className={`size-3.5 transition-transform duration-300 ${iconColor} ${
-                                                    active ? "scale-110 opacity-100" : "opacity-70 group-hover:scale-110 group-hover:opacity-100"
-                                                }`}
-                                            />;
-                                        }
-                                        return <Hash
-                                            className={`size-3.5 transition-transform duration-300 ${iconColor} ${
-                                                active ? "scale-110 opacity-100" : "opacity-70 group-hover:scale-110 group-hover:opacity-100"
-                                            }`}
-                                        />;
-                                    })()
-                                )}
-                                <span className="text-[11px] tracking-wide font-medium truncate">{cat.name}</span>
-                                {active && (
-                                    <div className="ml-auto w-1 h-1 rounded-full bg-yellow-200 shadow-[0_0_8px_rgba(254,249,195,0.8)]" />
-                                )}
-                            </Link>
+                  >
+                    {cat.iconUrl ? (
+                      <div
+                        className={`relative w-4 h-4 transition-transform duration-300 ${
+                          active ? "" : "group-hover:scale-110"
+                        }`}
+                      >
+                        <Image
+                          src={cat.iconUrl}
+                          alt={cat.name}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    ) : (
+                      (() => {
+                        const IconComponent = getDynamicIcon(cat.iconName);
+                        if (IconComponent) {
+                          return (
+                            <IconComponent
+                              className={`size-4 transition-transform duration-300 ${iconColor} ${
+                                active
+                                  ? "opacity-100"
+                                  : "opacity-60 group-hover:opacity-100 group-hover:scale-110"
+                              }`}
+                            />
+                          );
+                        }
+                        return (
+                          <Hash
+                            className={`size-4 transition-transform duration-300 ${iconColor} ${
+                              active
+                                ? "opacity-100"
+                                : "opacity-60 group-hover:opacity-100 group-hover:scale-110"
+                            }`}
+                          />
                         );
-                    })}
-                </nav>
-            </div>
+                      })()
+                    )}
+                    <span className="text-sm truncate">{cat.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
         ))}
       </div>
 
       {/* Footer / Admin Link */}
-      <div className="mt-2 pt-4 border-t border-white/5 space-y-1.5">
+      <div className="mt-2 pt-4 border-t border-white/5 space-y-2">
         <Link
           href="/submit"
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all duration-300 group"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-all duration-300 group"
         >
           <Send className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
           <span className="text-[10px] tracking-widest font-bold uppercase">
@@ -199,22 +207,22 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
 
         <Link
           href="/admin"
-          className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-md transition-all duration-300 group
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group
             ${
               pathname.startsWith("/admin")
-                ? "bg-white/10 text-white"
-                : "text-white/40 hover:text-white hover:bg-white/5"
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
             }
           `}
         >
           <ShieldAlert
-            className={`size-3.5 transition-transform duration-300 ${
-              pathname.startsWith("/admin") ? "scale-110" : "group-hover:scale-110"
+            className={`size-4 transition-transform duration-300 ${
+              pathname.startsWith("/admin")
+                ? "text-red-400"
+                : "text-zinc-500 group-hover:text-red-400 group-hover:scale-110"
             }`}
           />
-          <span className="text-[11px] tracking-wide font-medium">
-            Admin Access
-          </span>
+          <span className="text-sm font-medium">Admin Access</span>
         </Link>
       </div>
     </aside>
