@@ -13,6 +13,7 @@
     "better-auth": "^1.4.7",
     "cheerio": "^1.1.2",
     "cloudinary": "^2.8.0",
+    "d3-force": "^3.0.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "framer-motion": "^12.23.26",
@@ -20,11 +21,13 @@
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1",
+    "react-force-graph-2d": "^1.29.1",
     "react-hot-toast": "^2.6.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3-force": "^3.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

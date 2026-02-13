@@ -4,20 +4,21 @@ import { ArrowRight, Layers } from 'lucide-react';
 import ExploreHeader from "@/components/ExploreHeader";
 import ResourceCard from "@/components/ResourceCard";
 import MarkdownCard from "@/components/MarkdownCard";
+import NeuralGraph from "@/components/NeuralGraph";
 import { getExplorePageData } from "@/actions/sidebar";
+import { getGraphData } from "@/actions/graph";
 
 export default async function Home() {
   const { success, data } = await getExplorePageData();
+  const graphData = await getGraphData();
   const sections = success && data ? data : [];
 
   return (
     <div className="min-h-full bg-black text-white">
-      <ExploreHeader
-        title="Neural Codex"
-        subtitle="A curated registry of synthetic intelligence, cutting-edge tools, and operational blueprints."
-        category="System Core"
-        bgImage="/gradients/explore-bg.avif"
-      />
+      {/* Full-width Graph Hero - Immersive, Edge-to-Edge */}
+      <section className="h-[85vh] w-full border-b border-white/5 bg-black/40">
+          <NeuralGraph data={graphData} />
+      </section>
 
       <div className="px-6 md:px-12 py-12 space-y-20 pb-32">
         {sections.map((section) => (
