@@ -2,7 +2,9 @@
 
 :root {
   --background: #050505;
-    --foreground: #ededed;
+  --foreground: #ededed;
+  --sidebar-width: 256px; /* 64 * 4 */
+  --sidebar-collapsed-width: 80px; /* 20 * 4 */
 }
 
 @theme inline {

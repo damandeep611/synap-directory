@@ -41,7 +41,7 @@ export default function RootLayout({
         />
         <div className="flex h-screen w-full overflow-hidden font-sans">
           <Sidebar />
-          <main className="flex-1 h-full relative ml-64 overflow-y-auto no-scrollbar">
+          <main className="flex-1 h-full relative overflow-y-auto no-scrollbar transition-[margin] duration-300 ease-in-out" style={{ marginLeft: 'var(--sidebar-width)' }}>
             {children}
           </main>
         </div>
