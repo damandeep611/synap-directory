@@ -33,7 +33,7 @@ const createCategorySchema = z.object({
 
 // --- Explore Page Action ---
 
-export async function getExplorePageData() {
+export async function getExplorePageData(query?: string) {
   try {
     const sections = await db.query.sidebarSections.findMany({
       orderBy: [asc(sidebarSections.sortOrder)],
@@ -46,9 +46,15 @@ export async function getExplorePageData() {
 
     const sectionsWithData = await Promise.all(sections.map(async (section) => {
       const categoriesWithItems = await Promise.all(section.categories.map(async (cat) => {
+         // Define search conditions if query exists
+         let whereClause = eq(bookmarks.categoryId, cat.id);
+         
+         // If there's a query, we need to join with content tables to filter
+         // This is a bit complex for a single query, so we'll filter the results after fetching or refine the query
+         
          const recentBookmarks = await db.query.bookmarks.findMany({
            where: eq(bookmarks.categoryId, cat.id),
-           limit: 4,
+           limit: query ? 20 : 4, // Show more if searching
            orderBy: [desc(bookmarks.createdAt)],
            with: {
                appsAndTool: true,
@@ -89,13 +95,31 @@ export async function getExplorePageData() {
             return { id: b.id, title, description, imageUrl: image, url, date: b.createdAt, type, content };
          });
 
-         return { ...cat, items: processedItems };
+         // Filter by query if provided
+         const filteredItems = query 
+          ? processedItems.filter(item => 
+              item.title.toLowerCase().includes(query.toLowerCase()) || 
+              item.description.toLowerCase().includes(query.toLowerCase())
+            )
+          : processedItems;
+
+         return { ...cat, items: filteredItems };
       }));
       
-      return { ...section, categories: categoriesWithItems };
+      // Filter out categories that have no items if we are searching
+      const filteredCategories = query 
+        ? categoriesWithItems.filter(cat => cat.items.length > 0)
+        : categoriesWithItems;
+
+      return { ...section, categories: filteredCategories };
     }));
 
-    return { success: true, data: sectionsWithData };
+    // Filter out sections that have no categories if we are searching
+    const filteredSections = query
+      ? sectionsWithData.filter(sec => sec.categories.length > 0)
+      : sectionsWithData;
+
+    return { success: true, data: filteredSections };
   } catch (error) {
     console.error("Failed to fetch explore page data:", error);
     return { success: false, error: "Failed to fetch explore page data" };

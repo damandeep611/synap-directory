@@ -1,10 +1,31 @@
 "use client";
 
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { GraphData, GraphNode } from '@/actions/graph';
+import { GraphData, GraphNode, GraphLink } from '@/actions/graph';
 import { forceX, forceY, forceCollide } from 'd3-force';
+import { ForceGraphMethods } from 'react-force-graph-2d';
+
+// Extended types for the force simulation
+interface ForceGraphNode extends GraphNode {
+  x?: number;
+  y?: number;
+  vx?: number;
+  vy?: number;
+  index?: number;
+}
+
+interface ForceGraphLink extends Omit<GraphLink, 'source' | 'target'> {
+  source: ForceGraphNode | string;
+  target: ForceGraphNode | string;
+  index?: number;
+}
+
+// Helper to check if source/target are objects (post-init)
+const isNodeObject = (node: string | ForceGraphNode): node is ForceGraphNode => {
+  return typeof node !== 'string';
+};
 
 // Dynamic import to avoid SSR issues
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), {
@@ -48,14 +69,18 @@ const NeuralGraph: React.FC<NeuralGraphProps> = ({ data }) => {
     if (graphRef.current) {
       const fg = graphRef.current;
       // 1. Reduce repulsion for a denser cluster
-      fg.d3Force('charge').strength(-80);
+      fg.d3Force('charge')?.strength(-80);
       
       // 2. Shorten link distances significantly
-      fg.d3Force('link').distance((link: any) => {
-        if (link.source.type === 'root') return 50;
-        if (link.source.type === 'section') return 30;
-        return 15;
-      }).iterations(2);
+      const linkForce: any = fg.d3Force('link');
+      if (linkForce) {
+        linkForce.distance((link: ForceGraphLink) => {
+          const source = link.source as ForceGraphNode;
+          if (source.type === 'root') return 80; 
+          if (source.type === 'section') return 50; 
+          return 20; 
+        }).iterations(2);
+      }
 
       // 3. Add Centering force to pull everything into a "Brain" shape
       fg.d3Force('center', null); // Remove default center
@@ -63,12 +88,12 @@ const NeuralGraph: React.FC<NeuralGraphProps> = ({ data }) => {
       fg.d3Force('y', forceY(0).strength(0.1));
       
       // 4. Add Collision to prevent overlap in the dense cluster
-      fg.d3Force('collide', forceCollide((node: any) => node.size * 1.5));
+      fg.d3Force('collide', forceCollide((node: any) => (node as ForceGraphNode).size * 1.8)); 
     }
   }, [data]);
 
-  const handleClick = (node: any) => {
-    const gNode = node as GraphNode;
+  const handleClick = (node: object) => {
+    const gNode = node as ForceGraphNode;
     if (!gNode.isClickable) return;
 
     if (gNode.slug) {
@@ -78,10 +103,11 @@ const NeuralGraph: React.FC<NeuralGraphProps> = ({ data }) => {
     }
   };
 
-  const paintNode = (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const { x, y, color, label, size, type, isClickable } = node;
+  const paintNode = (node: object, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const n = node as ForceGraphNode;
+    const { x, y, color, label, size, type } = n;
     if (x === undefined || y === undefined || !Number.isFinite(x) || !Number.isFinite(y)) return;
-    const isHovered = hoverNode === node.id;
+    const isHovered = hoverNode === n.id;
     
     // 1. UNIQUE ROOT "BRAIN CORE" DESIGN
     if (type === 'root') {
@@ -123,54 +149,69 @@ const NeuralGraph: React.FC<NeuralGraphProps> = ({ data }) => {
         }
     }
 
-    // 2. Decorative Hub Rings
-    if (type === 'section' || type === 'category') {
+    // 2. Decorative Hub Rings (Only for categories now)
+    if (type === 'category') {
         ctx.beginPath();
         ctx.arc(x, y, size + 4 / globalScale, 0, 2 * Math.PI);
         ctx.strokeStyle = color;
         ctx.lineWidth = 1.5 / globalScale;
-        ctx.globalAlpha = isHovered ? 0.9 : (type === 'section' ? 0.6 : 0.3);
-        if (type === 'section') ctx.setLineDash([4, 2]);
+        ctx.globalAlpha = isHovered ? 0.9 : 0.3;
         ctx.stroke();
-        ctx.setLineDash([]); 
     }
 
     // 3. Core Node with Inner Detail
     ctx.beginPath();
     ctx.arc(x, y, size, 0, 2 * Math.PI);
-    ctx.fillStyle = isHovered || type === 'root' ? '#ffffff' : color;
+    
+    // Root is dark, Sections are vibrant colors
+    ctx.fillStyle = (isHovered && type !== 'root') ? '#ffffff' : color;
     ctx.globalAlpha = 1;
     ctx.fill();
+
+    // Define Root node with a subtle border
+    if (type === 'root') {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 2 / globalScale;
+        ctx.stroke();
+    }
     
-    if (size > 8) {
+    // Subtle inner depth for Root and Section
+    if ((type === 'root' || type === 'section') && size > 8) {
         ctx.beginPath();
-        ctx.arc(x, y, size * (type === 'root' ? 0.6 : 0.4), 0, 2 * Math.PI);
-        ctx.fillStyle = type === 'root' ? '#000000' : '#000000';
-        ctx.globalAlpha = 0.2;
+        ctx.arc(x, y, size * 0.8, 0, 2 * Math.PI);
+        ctx.fillStyle = type === 'root' ? '#ffffff' : '#000000';
+        ctx.globalAlpha = 0.05; 
         ctx.fill();
+        ctx.globalAlpha = 1;
     }
 
     // 4. Enhanced Typography
     const shouldShowLabel = globalScale > 0.6 || type === 'root' || type === 'section' || isHovered;
     if (shouldShowLabel) {
-      // Root font is 2x bigger than others
-      const baseFontSize = type === 'root' ? 18 : 7.6; // Root: ~+35%, Others: -20%
+      // Adjusted font sizes for larger nodes
+      const baseFontSize = type === 'root' ? 22 : (type === 'section' ? 12 : 7.6); 
       const fontSize = baseFontSize / globalScale; 
       
       ctx.font = `${type === 'root' || type === 'section' ? '900' : '500'} ${fontSize}px Inter, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      // Intense shadow/glow for root for "more white" look
-      ctx.shadowColor = type === 'root' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = (type === 'root' ? 15 : 6) / globalScale;
-      
-      ctx.fillStyle = isHovered || type === 'root' ? '#ffffff' : (type === 'section' ? color : '#ffffff');
-      
-      const labelYOffset = type === 'root' ? 0 : size + fontSize + (6 / globalScale);
-      
-      // Root label in center of node, others below
-      ctx.fillText(label, x, y + labelYOffset);
+      if (type === 'root' || type === 'section') {
+          // Label INSIDE the node
+          ctx.fillStyle = '#ffffff'; // All labels inside nodes are now white
+          ctx.shadowBlur = 0;
+          
+          // Use full label name (removed truncation)
+          ctx.fillText(label, x, y);
+      } else {
+          // Label BELOW the node for others
+          ctx.shadowColor = 'rgba(0,0,0,0.8)';
+          ctx.shadowBlur = 6 / globalScale;
+          ctx.fillStyle = isHovered ? '#ffffff' : '#ffffff';
+          
+          const labelYOffset = size + fontSize + (6 / globalScale);
+          ctx.fillText(label, x, y + labelYOffset);
+      }
       
       ctx.shadowBlur = 0;
     }
@@ -193,24 +234,27 @@ const NeuralGraph: React.FC<NeuralGraphProps> = ({ data }) => {
         height={dimensions.height}
         backgroundColor="rgba(0,0,0,0)"
         nodeCanvasObject={paintNode}
-        nodeLabel={(node: any) => node.isClickable ? `Click to explore ${node.label}` : node.label}
+        nodeLabel={(node: object) => {
+            const n = node as ForceGraphNode;
+            return n.isClickable ? `Click to explore ${n.label}` : n.label;
+        }}
         onNodeClick={handleClick}
-        onNodeHover={(node) => setHoverNode(node ? (node as any).id : null)}
+        onNodeHover={(node) => setHoverNode(node ? (node as ForceGraphNode).id : null)}
         
         // Link styling for that organic look
-        linkColor={(link: any) => link.color || 'rgba(255, 255, 255, 0.15)'}
+        linkColor={(link: object) => (link as ForceGraphLink).color || 'rgba(255, 255, 255, 0.15)'}
         linkCurvature={0.25}
-        linkWidth={(link: any) => (link.source.type === 'root' ? 2.5 : 1.2)}
+        linkWidth={(link: object) => {
+            const l = link as ForceGraphLink;
+            if (isNodeObject(l.source) && l.source.type === 'root') return 2.5;
+            return 1.2;
+        }}
         
         // Particle effects
         linkDirectionalParticles={3}
         linkDirectionalParticleSpeed={0.006}
         linkDirectionalParticleWidth={2.5}
-        linkDirectionalParticleColor={(link: any) => {
-            // Root-originating links get vibrant emerald particles
-            if (link.source.id === 'root' || link.source === 'root') return '#10b981';
-            return link.color || 'rgba(255, 255, 255, 0.4)';
-        }}
+        linkDirectionalParticleColor={(link: object) => (link as ForceGraphLink).color || 'rgba(255, 255, 255, 0.4)'}
         
         d3VelocityDecay={0.4}
       />

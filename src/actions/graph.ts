@@ -52,6 +52,16 @@ export async function getGraphData(): Promise<GraphData> {
   const links: GraphLink[] = [];
   const tagNodesMap = new Map<string, boolean>();
 
+  const SECTION_COLORS = [
+    '#3b82f6', // Blue
+    '#10b981', // Green
+    '#a855f7', // Purple
+    '#f59e0b', // Amber
+    '#ef4444', // Red
+    '#06b6d4', // Cyan
+    '#ec4899', // Pink
+  ];
+
   // 1. Root Node
   const rootId = "root";
   nodes.push({
@@ -60,26 +70,28 @@ export async function getGraphData(): Promise<GraphData> {
     type: "root",
     color: GRAPH_CONFIG.root.color,
     size: GRAPH_CONFIG.root.size,
-    val: GRAPH_CONFIG.root.size * 5,
+    val: GRAPH_CONFIG.root.size * 8, // Increased from 5
     isClickable: false,
   });
 
-  sections.forEach((section) => {
+  sections.forEach((section, sIdx) => {
+    const sectionColor = SECTION_COLORS[sIdx % SECTION_COLORS.length];
+    
     // 2. Section Nodes (Not clickable)
     nodes.push({
       id: section.id,
       label: section.title.toUpperCase(),
       type: "section",
-      color: GRAPH_CONFIG.section.color,
+      color: sectionColor,
       size: GRAPH_CONFIG.section.size,
-      val: GRAPH_CONFIG.section.size * 3,
+      val: GRAPH_CONFIG.section.size * 5, // Increased from 3
       isClickable: false,
     });
 
     links.push({ 
       source: rootId, 
       target: section.id,
-      color: "#10b981" // Vibrant Emerald Green
+      color: sectionColor
     });
 
     section.categories.forEach((category) => {
@@ -88,7 +100,7 @@ export async function getGraphData(): Promise<GraphData> {
         id: category.id,
         label: category.name,
         type: "category",
-        color: GRAPH_CONFIG.category.color,
+        color: sectionColor,
         size: GRAPH_CONFIG.category.size,
         val: GRAPH_CONFIG.category.size * 2,
         slug: `/${category.slug}`,
@@ -98,7 +110,7 @@ export async function getGraphData(): Promise<GraphData> {
       links.push({ 
         source: section.id, 
         target: category.id,
-        color: GRAPH_CONFIG.category.color 
+        color: sectionColor 
       });
 
       category.bookmarks.forEach((bookmark) => {
@@ -122,7 +134,7 @@ export async function getGraphData(): Promise<GraphData> {
           id: bookmark.id,
           label: label,
           type: "bookmark",
-          color: GRAPH_CONFIG.bookmark.color,
+          color: sectionColor,
           size: GRAPH_CONFIG.bookmark.size,
           val: GRAPH_CONFIG.bookmark.size,
           url: url,
@@ -133,7 +145,7 @@ export async function getGraphData(): Promise<GraphData> {
         links.push({ 
           source: category.id, 
           target: bookmark.id,
-          color: GRAPH_CONFIG.category.color 
+          color: sectionColor 
         });
 
         // 5. Tag Nodes & Cross-links

@@ -11,20 +11,20 @@ export const GRAPH_CONFIG: Record<NodeType, GraphNodeConfig> = {
   root: {
     type: 'root',
     labelField: 'name',
-    color: '#ffffff',
-    size: 24, // Increased from 20
+    color: '#0a0a0a', // Deep Black for contrast with white text
+    size: 40, 
   },
   section: {
     type: 'section',
     labelField: 'title',
     color: '#22d3ee', // Electric Cyan
-    size: 14,
+    size: 28, // Increased from 20
   },
   category: {
     type: 'category',
     labelField: 'name',
     color: '#818cf8', // indigo-400
-    size: 10,
+    size: 12, // Increased from 10
   },
   bookmark: {
     type: 'bookmark',
@@ -35,7 +35,7 @@ export const GRAPH_CONFIG: Record<NodeType, GraphNodeConfig> = {
   tag: {
     type: 'tag',
     labelField: 'name',
-    color: '#34d399', // emerald-400
+    color: '#ffffff', // Neutral White for contrast
     size: 3,
   },
 };
