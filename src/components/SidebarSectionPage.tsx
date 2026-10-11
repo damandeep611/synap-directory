@@ -1,4 +1,3 @@
-import PageHeader from "@/components/PageHeader";
 import { db } from "@/db/drizzle";
 import { bookmarks, appsAndTools, articles, markdownPosts, categories, tags, bookmarkTags } from "@/db/schema/content";
 import { eq, sql, desc } from "drizzle-orm";
@@ -29,7 +28,6 @@ export default async function SidebarSectionPage({
   const resources = await db
     .select({
       id: bookmarks.id,
-      // We don't have sidebarOption anymore on bookmarks, we filter by categoryId
       categorySlug: categories.slug,
       categoryId: categories.id,
 
@@ -56,7 +54,7 @@ export default async function SidebarSectionPage({
     .leftJoin(markdownPosts, eq(bookmarks.id, markdownPosts.bookmarkId))
     .leftJoin(bookmarkTags, eq(bookmarks.id, bookmarkTags.bookmarkId))
     .leftJoin(tags, eq(bookmarkTags.tagId, tags.id))
-    .where(eq(categories.id, category.id)) // Filter by Category ID
+    .where(eq(categories.id, category.id))
     .groupBy(
       bookmarks.id,
       categories.slug,
@@ -87,19 +85,13 @@ export default async function SidebarSectionPage({
 
   return (
     <div className="min-h-full bg-black text-white">
-      <PageHeader
-        title={category.name}
-        subtitle={`Explore the best ${category.name} resources`}
-        category={category.section?.title || "Directory"}
-      />
-
-      <div className="px-6 pb-12 pt-4">
+      <div className="px-6 pb-12 pt-0">
         {resources.length === 0 ? (
-          <div className="p-12 border border-white/10 rounded-2xl bg-white/5 text-center">
-            <h3 className="text-xl font-medium text-white mb-2">
+          <div className="p-12 border border-white/10 rounded-xl bg-white/[0.02] text-center">
+            <h3 className="text-lg font-medium text-white mb-2">
               No Resources Yet
             </h3>
-            <p className="text-white/40 max-w-sm mx-auto">
+            <p className="text-zinc-500 max-w-sm mx-auto text-sm">
               This category is waiting for its first submission.
             </p>
           </div>
@@ -109,7 +101,7 @@ export default async function SidebarSectionPage({
               ...r,
               url: r.url || "",
               imageUrl: r.imageUrl || null,
-              type: r.categorySlug, // Mapping slug to type for compatibility if needed
+              type: r.categorySlug,
             }))}
             availableTags={availableTags}
           />
