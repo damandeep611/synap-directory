@@ -52,10 +52,9 @@ export default function ResourceFeed({ resources, availableTags }: ResourceFeedP
             <button
               onClick={() => setSelectedTagIds([])}
               className={`shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 shadow-sm
-                ${
-                  selectedTagIds.length === 0
-                    ? "bg-white text-zinc-950 font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.3)] border border-white"
-                    : "bg-zinc-900/90 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/[0.08] hover:border-white/20"
+                ${selectedTagIds.length === 0
+                  ? "bg-white text-zinc-950 font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.3)] border border-white"
+                  : "bg-zinc-900/90 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/[0.08] hover:border-white/20"
                 }`}
             >
               All
@@ -65,10 +64,9 @@ export default function ResourceFeed({ resources, availableTags }: ResourceFeedP
                 key={tag.id}
                 onClick={() => toggleTag(tag.id)}
                 className={`shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 shadow-sm
-                  ${
-                    selectedTagIds.includes(tag.id)
-                      ? "bg-white text-zinc-950 font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.3)] border border-white"
-                      : "bg-zinc-900/90 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/[0.08] hover:border-white/20"
+                  ${selectedTagIds.includes(tag.id)
+                    ? "bg-white text-zinc-950 font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.3)] border border-white"
+                    : "bg-zinc-900/90 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/[0.08] hover:border-white/20"
                   }`}
               >
                 {tag.name}
@@ -131,7 +129,7 @@ function renderCard(res: Resource) {
       />
     );
   }
-  
+
   // Markdown Posts (checking content presence)
   if (res.content) {
     return (

@@ -7,7 +7,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { randomUUID } from "crypto";
-import { eq, asc, desc, ilike, or } from "drizzle-orm";
+import { eq, asc, desc, ilike, or, count, isNull } from "drizzle-orm";
 
 function slugify(text: string) {
   return text
@@ -194,10 +194,44 @@ export async function getSidebarData() {
     const sections = await db.query.sidebarSections.findMany({
       orderBy: [asc(sidebarSections.sortOrder), asc(sidebarSections.createdAt)],
       with: {
-        categories: true,
+        categories: {
+          orderBy: [asc(categories.name)],
+        },
       },
     });
-    return { success: true, data: sections };
+
+    const bookmarkCounts = await db
+      .select({
+        categoryId: bookmarks.categoryId,
+        count: count(bookmarks.id),
+      })
+      .from(bookmarks)
+      .where(isNull(bookmarks.deletedAt))
+      .groupBy(bookmarks.categoryId);
+
+    const countMap = new Map<string, number>();
+    let totalBookmarks = 0;
+    for (const item of bookmarkCounts) {
+      if (item.categoryId) {
+        const c = Number(item.count);
+        countMap.set(item.categoryId, c);
+        totalBookmarks += c;
+      }
+    }
+
+    const sectionsWithCounts = sections.map((section) => ({
+      ...section,
+      categories: section.categories.map((cat) => ({
+        ...cat,
+        count: countMap.get(cat.id) ?? 0,
+      })),
+    }));
+
+    return {
+      success: true,
+      data: sectionsWithCounts,
+      totalCount: totalBookmarks,
+    };
   } catch (error) {
     console.error("Failed to fetch sidebar data:", error);
     return { success: false, error: "Failed to fetch sidebar data" };

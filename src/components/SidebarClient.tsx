@@ -23,6 +23,7 @@ interface Category {
   slug: string;
   iconUrl?: string | null;
   iconName?: string | null;
+  count?: number;
 }
 
 interface SidebarSection {
@@ -34,9 +35,33 @@ interface SidebarSection {
 
 interface SidebarClientProps {
   sections: SidebarSection[];
+  totalCount?: number;
 }
 
-const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
+// Curated palette of modern dark-mode accent colors for active category icon badges
+const ACCENT_COLORS = [
+  { bg: "bg-amber-500/20", text: "text-amber-400", border: "border-amber-500/30" }, // Gold/Amber matching user's reference
+  { bg: "bg-emerald-500/20", text: "text-emerald-400", border: "border-emerald-500/30" },
+  { bg: "bg-cyan-500/20", text: "text-cyan-400", border: "border-cyan-500/30" },
+  { bg: "bg-violet-500/20", text: "text-violet-400", border: "border-violet-500/30" },
+  { bg: "bg-rose-500/20", text: "text-rose-400", border: "border-rose-500/30" },
+  { bg: "bg-orange-500/20", text: "text-orange-400", border: "border-orange-500/30" },
+  { bg: "bg-indigo-500/20", text: "text-indigo-400", border: "border-indigo-500/30" },
+  { bg: "bg-fuchsia-500/20", text: "text-fuchsia-400", border: "border-fuchsia-500/30" },
+  { bg: "bg-teal-500/20", text: "text-teal-400", border: "border-teal-500/30" },
+];
+
+function getCategoryAccent(key: string) {
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash << 5) - hash + key.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % ACCENT_COLORS.length;
+  return ACCENT_COLORS[index];
+}
+
+const SidebarClient: React.FC<SidebarClientProps> = ({ sections, totalCount }) => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -79,7 +104,7 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
 
   // Static top items
   const mainItems = [
-    { label: "Explore", href: "/", icon: Compass },
+    { label: "Explore", href: "/", icon: Compass, count: totalCount },
     { label: "Benchmarks", href: "/benchmarks", icon: BarChart3 },
     { label: "Prompt Base", href: "/prompts", icon: Terminal },
   ];
@@ -120,30 +145,51 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
             Browse
           </h2>
         )}
-        <nav className={`space-y-0.5 mb-5 ${isCollapsed ? "flex flex-col items-center" : ""}`}>
+        <nav className={`space-y-1 mb-5 ${isCollapsed ? "flex flex-col items-center" : ""}`}>
           {mainItems.map((item) => {
             const active = isActiveLink(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                title={isCollapsed ? item.label : ""}
-                className={`flex items-center gap-2.5 py-2 rounded-lg transition-all duration-200 group
-                      ${isCollapsed ? "px-2 justify-center" : "w-full px-3"}
+                title={isCollapsed ? `${item.label}${typeof item.count === "number" ? ` (${item.count})` : ""}` : ""}
+                className={`flex items-center transition-all duration-200 group
+                      ${isCollapsed ? "px-1.5 py-1 justify-center rounded-lg" : "w-full px-2 py-1 rounded-lg gap-2"}
                       ${
                         active
-                          ? "text-white font-medium bg-white/[0.06]"
-                          : "text-zinc-500 hover:text-zinc-200"
+                          ? "bg-[#222222] border border-white/5 shadow-sm text-white"
+                          : "hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200 border border-transparent"
                       }`}
               >
-                <item.icon
-                  className={`size-[16px] transition-colors duration-200 ${
+                <div
+                  className={`size-7 rounded-md flex items-center justify-center shrink-0 transition-all duration-200 ${
                     active
-                      ? "text-white"
-                      : "text-zinc-600 group-hover:text-zinc-300"
+                      ? "bg-white/15 text-white border border-white/20"
+                      : "bg-zinc-800/50 border border-white/5 text-zinc-400 group-hover:text-zinc-200 group-hover:bg-zinc-800/80"
                   }`}
-                />
-                {!isCollapsed && <span className="text-[13px]">{item.label}</span>}
+                >
+                  <item.icon className="size-[13px]" />
+                </div>
+                {!isCollapsed && (
+                  <>
+                    <span
+                      className={`text-[12.5px] truncate flex-1 text-left transition-colors duration-200 ${
+                        active ? "text-white font-medium" : "text-zinc-300 group-hover:text-white font-normal"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                    {typeof item.count === "number" && (
+                      <span
+                        className={`text-[11.5px] tabular-nums shrink-0 ml-auto transition-colors duration-200 ${
+                          active ? "text-zinc-300 font-medium" : "text-zinc-500 group-hover:text-zinc-400 font-normal"
+                        }`}
+                      >
+                        {item.count.toLocaleString()}
+                      </span>
+                    )}
+                  </>
+                )}
               </Link>
             );
           })}
@@ -151,59 +197,84 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
 
         {/* Dynamic Sections */}
         {sections.map((section) => (
-          <div key={section.id} className="mb-4">
+          <div key={section.id} className="mb-5">
             {!isCollapsed && (
               <h2 className="text-[11px] tracking-[0.12em] uppercase text-zinc-600 font-medium mb-2 px-3">
                 {section.title}
               </h2>
             )}
-            <nav className={`space-y-0.5 ${isCollapsed ? "flex flex-col items-center" : ""}`}>
+            <nav className={`space-y-1 ${isCollapsed ? "flex flex-col items-center" : ""}`}>
               {section.categories.map((cat) => {
                 const href = `/${cat.slug}`;
                 const active = isActiveLink(href);
+                const accent = getCategoryAccent(cat.slug || cat.id);
 
                 return (
                   <Link
                     key={cat.id}
                     href={href}
-                    title={isCollapsed ? cat.name : ""}
-                    className={`flex items-center gap-2.5 py-1.5 rounded-lg transition-all duration-200 group
-                                ${isCollapsed ? "px-2 justify-center" : "w-full px-3"}
+                    title={isCollapsed ? `${cat.name} (${cat.count ?? 0})` : ""}
+                    className={`flex items-center transition-all duration-200 group
+                                ${isCollapsed ? "px-1.5 py-1 justify-center rounded-lg" : "w-full px-2 py-1 rounded-lg gap-2"}
                                 ${
                                   active
-                                    ? "text-white font-medium bg-white/[0.06]"
-                                    : "text-zinc-500 hover:text-zinc-200"
+                                    ? "bg-[#222222] border border-white/5 shadow-sm"
+                                    : "hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200 border border-transparent"
                                 }`}
                   >
-                    {cat.iconUrl ? (
-                      <div
-                        className={`relative w-4 h-4 transition-opacity duration-200 ${
-                          active ? "opacity-100" : "opacity-50 group-hover:opacity-80"
-                        }`}
-                      >
-                        <Image
-                          src={cat.iconUrl}
-                          alt={cat.name}
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                    ) : (
-                      (() => {
-                        const IconComponent = getDynamicIcon(cat.iconName);
-                        const Icon = IconComponent || LucideIcons.Hash;
-                        return (
-                          <Icon
-                            className={`size-[15px] transition-colors duration-200 ${
-                              active
-                                ? "text-white"
-                                : "text-zinc-600 group-hover:text-zinc-400"
-                            }`}
+                    {/* Left Icon Badge Container */}
+                    <div
+                      className={`size-7 rounded-md flex items-center justify-center shrink-0 transition-all duration-200 ${
+                        active
+                          ? `${accent.bg} ${accent.text} border ${accent.border}`
+                          : "bg-zinc-800/50 border border-white/5 text-zinc-400 group-hover:text-zinc-200 group-hover:bg-zinc-800/80"
+                      }`}
+                    >
+                      {cat.iconUrl ? (
+                        <div
+                          className={`relative w-3.5 h-3.5 transition-opacity duration-200 ${
+                            active ? "opacity-100" : "opacity-70 group-hover:opacity-100"
+                          }`}
+                        >
+                          <Image
+                            src={cat.iconUrl}
+                            alt={cat.name}
+                            fill
+                            className="object-contain"
                           />
-                        );
-                      })()
+                        </div>
+                      ) : (
+                        (() => {
+                          const IconComponent = getDynamicIcon(cat.iconName);
+                          const Icon = IconComponent || LucideIcons.Hash;
+                          return <Icon className="size-[13px]" />;
+                        })()
+                      )}
+                    </div>
+
+                    {/* Category Label and Count */}
+                    {!isCollapsed && (
+                      <>
+                        <span
+                          className={`text-[12.5px] truncate flex-1 text-left transition-colors duration-200 ${
+                            active
+                              ? "text-white font-medium"
+                              : "text-zinc-300 group-hover:text-white font-normal"
+                          }`}
+                        >
+                          {cat.name}
+                        </span>
+                        <span
+                          className={`text-[11.5px] tabular-nums shrink-0 ml-auto transition-colors duration-200 ${
+                            active
+                              ? "text-zinc-300 font-medium"
+                              : "text-zinc-500 group-hover:text-zinc-400 font-normal"
+                          }`}
+                        >
+                          {(cat.count ?? 0).toLocaleString()}
+                        </span>
+                      </>
                     )}
-                    {!isCollapsed && <span className="text-[13px] truncate">{cat.name}</span>}
                   </Link>
                 );
               })}
@@ -217,13 +288,20 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
         <Link
           href="/submit"
           title={isCollapsed ? "Submit a tool" : ""}
-          className={`flex items-center gap-2.5 py-2 rounded-lg text-zinc-500 hover:text-zinc-200 transition-all duration-200 group
-            ${isCollapsed ? "px-2 justify-center" : "w-full px-3"}
+          className={`flex items-center transition-all duration-200 group
+            ${isCollapsed ? "px-1.5 py-1 justify-center rounded-lg" : "w-full px-2 py-1 rounded-lg gap-2"}
+            ${
+              isActiveLink("/submit")
+                ? "bg-[#222222] border border-white/5 shadow-sm text-white"
+                : "hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200 border border-transparent"
+            }
           `}
         >
-          <Send className="size-[15px] group-hover:translate-x-0.5 transition-transform text-zinc-600 group-hover:text-zinc-400" />
+          <div className="size-7 rounded-md bg-zinc-800/50 border border-white/5 flex items-center justify-center shrink-0 group-hover:bg-zinc-800/80 text-zinc-400 group-hover:text-zinc-200 transition-colors">
+            <Send className="size-[13px] group-hover:translate-x-0.5 transition-transform" />
+          </div>
           {!isCollapsed && (
-            <span className="text-[13px]">
+            <span className="text-[12.5px] flex-1 text-left text-zinc-300 group-hover:text-white">
               Submit a tool
             </span>
           )}
@@ -232,23 +310,29 @@ const SidebarClient: React.FC<SidebarClientProps> = ({ sections }) => {
         <Link
           href="/admin"
           title={isCollapsed ? "Admin Access" : ""}
-          className={`flex items-center gap-2.5 py-2 rounded-lg transition-all duration-200 group
-            ${isCollapsed ? "px-2 justify-center" : "w-full px-3"}
+          className={`flex items-center transition-all duration-200 group
+            ${isCollapsed ? "px-1.5 py-1 justify-center rounded-lg" : "w-full px-2 py-1 rounded-lg gap-2"}
             ${
               pathname.startsWith("/admin")
-                ? "text-white font-medium bg-white/[0.06]"
-                : "text-zinc-500 hover:text-zinc-200"
+                ? "bg-[#222222] border border-white/5 shadow-sm text-white font-medium"
+                : "hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200 border border-transparent"
             }
           `}
         >
-          <ShieldAlert
-            className={`size-[15px] transition-colors duration-200 ${
+          <div
+            className={`size-7 rounded-md flex items-center justify-center shrink-0 border transition-colors ${
               pathname.startsWith("/admin")
-                ? "text-red-400"
-                : "text-zinc-600 group-hover:text-red-400/70"
+                ? "bg-red-500/15 border-red-500/25 text-red-400"
+                : "bg-zinc-800/50 border-white/5 text-zinc-400 group-hover:text-red-400/80 group-hover:bg-zinc-800/80"
             }`}
-          />
-          {!isCollapsed && <span className="text-[13px]">Admin Access</span>}
+          >
+            <ShieldAlert className="size-[13px]" />
+          </div>
+          {!isCollapsed && (
+            <span className="text-[12.5px] flex-1 text-left text-zinc-300 group-hover:text-white">
+              Admin Access
+            </span>
+          )}
         </Link>
       </div>
     </aside>
