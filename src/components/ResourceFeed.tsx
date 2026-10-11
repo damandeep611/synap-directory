@@ -46,16 +46,16 @@ export default function ResourceFeed({ resources, availableTags }: ResourceFeedP
     <div>
       {/* Sticky Tag Filter Bar — pill-tab style */}
       {availableTags.length > 0 && (
-        <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/5 -mx-6 px-6 mb-8">
-          <div className="flex items-center gap-2 py-3 overflow-x-auto no-scrollbar">
+        <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/[0.06] -mx-6 px-6 mb-8">
+          <div className="flex items-center gap-2 py-2.5 overflow-x-auto no-scrollbar scroll-smooth">
             {/* "All" pill */}
             <button
               onClick={() => setSelectedTagIds([])}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200
+              className={`shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 shadow-sm
                 ${
                   selectedTagIds.length === 0
-                    ? "bg-zinc-700 text-white"
-                    : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                    ? "bg-white text-zinc-950 font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.3)] border border-white"
+                    : "bg-zinc-900/90 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/[0.08] hover:border-white/20"
                 }`}
             >
               All
@@ -64,11 +64,11 @@ export default function ResourceFeed({ resources, availableTags }: ResourceFeedP
               <button
                 key={tag.id}
                 onClick={() => toggleTag(tag.id)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200
+                className={`shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 shadow-sm
                   ${
                     selectedTagIds.includes(tag.id)
-                      ? "bg-zinc-700 text-white"
-                      : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                      ? "bg-white text-zinc-950 font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.3)] border border-white"
+                      : "bg-zinc-900/90 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-white/[0.08] hover:border-white/20"
                   }`}
               >
                 {tag.name}
@@ -79,7 +79,8 @@ export default function ResourceFeed({ resources, availableTags }: ResourceFeedP
             {selectedTagIds.length > 0 && (
               <button
                 onClick={() => setSelectedTagIds([])}
-                className="shrink-0 ml-1 size-7 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+                className="shrink-0 ml-1 size-7 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+                title="Clear filters"
               >
                 <X className="size-3.5" />
               </button>

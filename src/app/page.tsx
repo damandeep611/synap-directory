@@ -23,18 +23,8 @@ export default async function Home() {
       {/* Content Feed */}
       <div className="px-6 py-8 space-y-16 pb-32">
         {sections.map((section) => (
-          <div key={section.id} className="space-y-10">
-            {/* Section Title */}
-            <div className="flex items-center gap-4">
-              <div className="h-px bg-white/[0.06] flex-1" />
-              <h2 className="text-[11px] font-medium tracking-[0.15em] text-zinc-600 uppercase">
-                {section.title}
-              </h2>
-              <div className="h-px bg-white/[0.06] flex-1" />
-            </div>
-
-            <div className="space-y-14">
-              {section.categories.map((category) => (
+          <div key={section.id} className="space-y-14">
+            {section.categories.map((category) => (
                 <div key={category.id} className="space-y-5">
                   {/* Category Header */}
                   <div className="flex items-end justify-between">
@@ -105,7 +95,6 @@ export default async function Home() {
                   )}
                 </div>
               ))}
-            </div>
           </div>
         ))}
 
